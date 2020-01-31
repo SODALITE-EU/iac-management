@@ -1,0 +1,5 @@
+*.data
+*.deploy
+*.gz
+*.json
+openrc.sh

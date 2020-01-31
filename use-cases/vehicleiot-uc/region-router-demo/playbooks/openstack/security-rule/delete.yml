@@ -1,0 +1,86 @@
+---
+- hosts: all
+  gather_facts: no
+
+  tasks:
+    - name: Delete security group
+      os_security_group:  
+        name: "{{ group_name }}"
+        state: absent
+
+
+    # - name: Create security group
+    #   os_security_group:  
+    #     name: "{{ group_name }}"
+    #     state: present
+    #     description: "{{ group_description }}"
+
+    # - name: Create security rules
+    #   block:
+    #     - os_security_group_rule:
+    #         security_group: "{{ group_name }}"
+    #         protocol: tcp
+    #         port_range_min: 5678
+    #         port_range_max: 5679
+    #         remote_ip_prefix: 0.0.0.0/0
+    #     - os_security_group_rule:
+    #         security_group: "{{ group_name }}"
+    #         protocol: tcp
+    #         port_range_min: 8443
+    #         port_range_max: 8443
+    #         remote_ip_prefix: 0.0.0.0/0
+    #     - os_security_group_rule:
+    #         security_group: "{{ group_name }}"
+    #         protocol: tcp
+    #         port_range_min: 8500
+    #         port_range_max: 8500
+    #         remote_ip_prefix: 0.0.0.0/0
+    #     - os_security_group_rule:
+    #         security_group: "{{ group_name }}"
+    #         protocol: tcp
+    #         port_range_min: 4041
+    #         port_range_max: 4041
+    #         remote_ip_prefix: 0.0.0.0/0
+    #     - os_security_group_rule:
+    #         security_group: "{{ group_name }}"
+    #         protocol: tcp
+    #         port_range_min: 7000
+    #         port_range_max: 7000
+    #         remote_ip_prefix: 0.0.0.0/0
+
+  # tasks:
+  #   - name: Create security group
+  #     os_security_group:
+  #       name: "{{ name }}"
+  #       state: present
+  #       description: "{{ description }}"
+
+  #   - name: Create TCP rules group
+  #     os_security_group_rule:
+  #       security_group: "{{ name }}"
+  #       protocol: tcp
+  #       port_range_min: "{{ item }}"
+  #       port_range_max: "{{ item }}"
+  #       remote_ip_prefix: "{{ remote_ip_prefix }}"
+  #     loop: "{{ tcp_ports }}"
+
+  #   - name: Create UDP rules group
+  #     os_security_group_rule:
+  #       security_group: "{{ name }}"
+  #       protocol: udp
+  #       port_range_min: "{{ item }}"
+  #       port_range_max: "{{ item }}"
+  #       remote_ip_prefix: "{{ remote_ip_prefix }}"
+  #     loop: "{{ udp_ports }}"
+
+  #   - name: Create ICMP rules group
+  #     os_security_group_rule:
+  #       security_group: "{{ name }}"
+  #       protocol: icmp
+  #       port_range_min: "{{ item }}"
+  #       port_range_max: "{{ item }}"
+  #       remote_ip_prefix: "{{ remote_ip_prefix }}"
+  #     loop: "{{ icmp_ports }}"
+
+    
+

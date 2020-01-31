@@ -1,0 +1,16 @@
+---
+- hosts: all
+  vars:
+    pip_install_packages:
+      - name: docker
+  tasks:
+    - name: Create docker container and connect to network
+      docker_container:
+        name: "{{ image_name }}"
+        image: "{{ image_name }}"
+        auto_remove: yes
+        ports:
+          - "{{ ports }}"
+        exposed_ports:
+          - "{{ exposed_ports }}"
+

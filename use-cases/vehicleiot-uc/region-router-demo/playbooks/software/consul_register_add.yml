@@ -1,0 +1,13 @@
+---
+- hosts: all
+  become_user: root
+  become: yes
+
+  tasks:
+    - name: Register a service to consul
+      consul:
+        service_id: "{{ service_id }}"
+        service_name: "{{ service_name }}"
+        service_address: "{{ service_address }}"
+        service_port: "{{ service_port }}"
+        tags: "{{ tags }}"          

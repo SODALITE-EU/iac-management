@@ -1,0 +1,19 @@
+---
+- hosts: all
+  become: yes
+
+  tasks:
+    - name: Install sample site
+      copy:
+        dest: /usr/share/nginx/html/index.html
+        content: |
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <title>Goodbye World!</title>
+          </head>
+          <body>
+            <h1>Sample modified page</h1>
+            <p>Still with little content tho ;)</p>
+          </body>
+          </html>

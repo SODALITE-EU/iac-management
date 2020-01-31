@@ -1,0 +1,38 @@
+---
+- hosts: all
+  become_user: root
+  become: yes
+  vars:
+    pip_install_packages:
+        - name: docker
+
+  tasks:
+
+    - name: Delete docker containers
+      docker_container:
+        name: "{{ host_name }}"
+        force_kill: true
+        keep_volumes: false
+        state: absent
+
+    - name: Remove folders with certs and storage
+      block:
+        - file:
+            path: "/home/{{ host_name }}/drive"
+            state: absent
+        - file:
+            path: "/home/{{ host_name }}/certs"
+            state: absent
+        - file:
+            path: "/etc/docker/certs.d/{{ public_ipv4_address }}"
+            state: absent
+
+    - name: Uninstall root CA
+      block:
+        - command: "rm -rf /etc/pki/ca-trust/source/anchors/ca.crt"
+        - command: update-ca-trust
+
+  roles:
+    - geerlingguy.repo-epel
+    - geerlingguy.pip
+    - geerlingguy.docker

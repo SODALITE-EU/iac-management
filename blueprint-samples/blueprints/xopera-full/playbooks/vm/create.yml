@@ -1,0 +1,89 @@
+---
+- hosts: all
+  gather_facts: no
+
+  tasks:
+    - name: Create sodalite-xopera-rest security groups and add rules
+      block:
+        - os_security_group:
+            state: present
+            name: sodalite-xopera-rest
+            description: Security group for the xOpera rest api
+        - os_security_group_rule:
+            security_group: sodalite-xopera-rest
+            protocol: tcp
+            port_range_min: 5432
+            port_range_max: 5432
+            remote_ip_prefix: 0.0.0.0/0
+        - os_security_group_rule:
+            security_group: sodalite-xopera-rest
+            protocol: tcp
+            port_range_min: 5000
+            port_range_max: 5000
+            remote_ip_prefix: 0.0.0.0/0
+        - os_security_group_rule:
+            security_group: sodalite-xopera-rest
+            protocol: tcp
+            port_range_min: 443
+            port_range_max: 443
+            remote_ip_prefix: 0.0.0.0/0
+        - os_security_group_rule:
+            security_group: sodalite-xopera-rest
+            protocol: tcp
+            port_range_min: 80
+            port_range_max: 80
+            remote_ip_prefix: 0.0.0.0/0
+    - name: Create sodalite-remote-access security groups and add rules
+      block:
+        - os_security_group:
+            state: present
+            name: sodalite-remote-access
+            description: Security group for sodalite remote access
+        - os_security_group_rule:
+            security_group: sodalite-remote-access
+            protocol: tcp
+            port_range_min: 20
+            port_range_max: 21
+            remote_ip_prefix: 0.0.0.0/0
+        - os_security_group_rule:
+            security_group: sodalite-remote-access
+            protocol: tcp
+            port_range_min: 22
+            port_range_max: 22
+            remote_ip_prefix: 0.0.0.0/0
+
+    - name: Create VM
+      os_server:
+        state: present
+        name: "{{ vm_name }}"
+        image: "{{ image }}"
+        key_name: "{{ key_name }}"
+        flavor: "{{ flavor }}"
+        network: "{{ network }}"
+        security_groups: "{{ security_groups }}"
+      register: server_info
+
+    - name: Set attributes
+      set_stats:
+        data:
+          private_address: "{{ server_info.server.private_v4 }}"
+          public_address: "{{ server_info.server.public_v4 }}"
+          id: "{{ server_info.server.id }}"
+
+    - name: Create temporary invetory for ssh wait
+      add_host:
+        name: server
+        groups: vms
+        ansible_host: "{{ server_info.server.public_v4 }}"
+        ansible_user: centos
+        ansible_ssh_common_args: >
+          -o IdentitiesOnly=yes
+          -o BatchMode=yes
+          -o UserKnownHostsFile=/dev/null
+          -o StrictHostKeyChecking=no
+
+- hosts: vms
+  gather_facts: no
+  tasks:
+    - name: Wait for ssh to wake up
+      wait_for_connection:

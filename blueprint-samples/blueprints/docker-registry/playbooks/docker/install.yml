@@ -1,0 +1,86 @@
+---
+- hosts: all
+  become_user: root
+  become: yes
+  vars:
+    pip_install_packages:
+      - name: docker
+      - name: cryptography
+
+  tasks:
+    - name: Create certs and registry folders
+      block:
+        - file:
+            path: /home/localregistry/registry
+            state: directory
+        - file:
+            path: /home/localregistry/certs
+            state: directory
+
+    - name: Copy root CA files
+      block:
+        - copy:
+            src: /home/xopera/certs/ca.crt
+            dest: /home/localregistry/certs/ca.crt
+        - copy:
+            src: /home/xopera/certs/ca.key
+            dest: /home/localregistry/certs/ca.key
+
+    - name: Install root CA
+      block:
+        - command: cp /home/localregistry/certs/ca.crt /etc/pki/ca-trust/source/anchors/ca.crt
+        - command: update-ca-trust
+
+    - name: Generate certificates and clean up
+      block:
+        - openssl_privatekey:
+            path: /home/localregistry/certs/registry.docker.local.key
+            size: 4096
+        - openssl_csr:
+            path: /home/localregistry/certs/registry.docker.local.csr
+            privatekey_path: /home/localregistry/certs/registry.docker.local.key
+            country_name: SI
+            organization_name: XLAB
+            email_address: dragan.radolovic@xlab.si
+            common_name: registry.docker.local
+            subject_alt_name: "IP:{{ public_ipv4_address }}"
+        - openssl_certificate:
+            path: /home/localregistry/certs/registry.docker.local.crt
+            csr_path: /home/localregistry/certs/registry.docker.local.csr
+            ownca_path: /home/localregistry/certs/ca.crt
+            ownca_privatekey_path: /home/localregistry/certs/ca.key
+            provider: ownca
+        - file:
+            state: absent
+            path: "/home/localregistry/certs/ca.key"
+        - file:
+            state: absent
+            path: "/home/localregistry/certs/registry.docker.local.csr"
+
+    - name: Create docker registry
+      docker_container:
+        name: registry
+        restart_policy: always
+        image: "registry:2"
+        ports:
+          - "443:443"
+        exposed_ports:
+          - "443"
+        ca_cert: "/certs/ca.crt"
+        client_cert: "/certs/registry.docker.local.crt"
+        client_key: "/certs/registry.docker.local.key"
+        etc_hosts:
+          registry.docker.local: 127.0.0.1
+        volumes:
+          - "/home/localregistry/registry:/var/lib/registry"
+          - "/home/localregistry/certs:/certs"
+        env:
+          REGISTRY_HTTP_ADDR: 0.0.0.0:443
+          REGISTRY_HTTP_TLS_CLIENTCAS: "[/certs/ca.crt]"
+          REGISTRY_HTTP_TLS_CERTIFICATE: "/certs/registry.docker.local.crt"
+          REGISTRY_HTTP_TLS_KEY: "/certs/registry.docker.local.key"
+
+  roles:
+    - geerlingguy.repo-epel
+    - geerlingguy.pip
+    - geerlingguy.docker

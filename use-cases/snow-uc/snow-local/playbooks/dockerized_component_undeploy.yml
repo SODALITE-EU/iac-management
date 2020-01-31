@@ -1,0 +1,13 @@
+---
+- hosts: all
+  vars:
+    pip_install_packages:
+      - name: docker
+
+  tasks:
+    - name: Delete docker containers
+      docker_container:
+        name: "{{ id }}"
+        force_kill: true
+        keep_volumes: false
+        state: absent

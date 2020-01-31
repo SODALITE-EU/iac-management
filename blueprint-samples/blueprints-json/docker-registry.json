@@ -1,0 +1,52 @@
+{
+    "blueprint_id": "docker-registry",
+    "tosca_definition": {
+        "name": "service.yaml",
+        "type": "file",
+        "content": "tosca_definitions_version: tosca_simple_yaml_1_0\n\nnode_types:\n  my.nodes.VM.OpenStack:\n    derived_from: tosca.nodes.Compute\n    properties:\n      name:\n        type: string\n        description: Name that should be given to the VM in OpenStack\n      image:\n        type: string\n        description: OpenStack image id (image names are not accepted)\n      flavor:\n        type: string\n        description: OpenStack flavor id (flavor names are not accepted)\n      network:\n        type: string\n        description: OpenStack network id (network names are not accepted)\n      security_groups:\n        type: string\n        description: OpenStack names of the security groups to which the instance should be added.Comma separated string.\n      key_name:\n        type: string\n        description: OpenStack SSH key name that should be placed on the VM\n    attributes:\n      id:\n        type: string\n        description: OpenStack id of the VM\n      private_address:\n        type: string\n        description: Private ipv4\n      public_address:\n        type: string\n        description: Public ipv4\n    interfaces:\n      Standard:\n        type: tosca.interfaces.node.lifecycle.Standard\n        create:\n          inputs:\n            vm_name:  { default: { get_property: [ SELF, name     ] } }\n            image:    { default: { get_property: [ SELF, image    ] } }\n            flavor:   { default: { get_property: [ SELF, flavor   ] } }\n            network:  { default: { get_property: [ SELF, network  ] } }\n            security_groups:  { default: { get_property: [ SELF, security_groups  ] } }\n            key_name: { default: { get_property: [ SELF, key_name ] } }\n          implementation: playbooks/vm/create.yml\n        delete:\n          inputs:\n            id: { default: { get_attribute: [ SELF, id ] } }\n          implementation: playbooks/vm/delete.yml\n\n  my.nodes.Docker:\n    derived_from: tosca.nodes.SoftwareComponent\n    attributes:\n      site_config_dir:\n        type: string\n        description: Location of docker site configs\n    interfaces:\n      Standard:\n        type: tosca.interfaces.node.lifecycle.Standard\n        create:\n          inputs:\n            network:  { default: { get_attribute: [ SELF, host, network] } }\n            public_ipv4_address: { default:  { get_attribute: [SELF, host, public_address] } }\n          implementation:\n            primary: playbooks/docker/install.yml\n        delete:\n          implementation:\n            primary: playbooks/docker/uninstall.yml\n\ntopology_template:\n  node_templates:\n    vm:\n      type: my.nodes.VM.OpenStack\n      properties:\n        name: docker-registry\n        image: centos7\n        flavor: m1.medium\n        network: orchestrator-net\n        security_groups: default,sodalite-xopera-rest,sodalite-remote-access\n        key_name: { get_input: xopera-key-name}\n\n    docker:\n      type: my.nodes.Docker\n      requirements:\n        - host: vm"
+    },
+    "ansible_definition": {
+        "name": "playbooks",
+        "type": "dir",
+        "content": [
+            {
+                "name": "docker",
+                "type": "dir",
+                "content": [
+                    {
+                        "name": "uninstall.yml",
+                        "type": "file",
+                        "content": "---\n- hosts: all\n  become: yes"
+                    },
+                    {
+                        "name": "install.yml",
+                        "type": "file",
+                        "content": "---\n- hosts: all\n  become_user: root\n  become: yes\n  vars:\n    pip_install_packages:\n      - name: docker\n      - name: cryptography\n\n  tasks:\n    - name: Create certs and registry folders\n      block:\n        - file:\n            path: /home/localregistry/registry\n            state: directory\n        - file:\n            path: /home/localregistry/certs\n            state: directory\n\n    - name: Copy root CA files\n      block:\n        - copy:\n            src: /home/xopera/certs/ca.crt\n            dest: /home/localregistry/certs/ca.crt\n        - copy:\n            src: /home/xopera/certs/ca.key\n            dest: /home/localregistry/certs/ca.key\n\n    - name: Install root CA\n      block:\n        - command: cp /home/localregistry/certs/ca.crt /etc/pki/ca-trust/source/anchors/ca.crt\n        - command: update-ca-trust\n\n    - name: Generate certificates and clean up\n      block:\n        - openssl_privatekey:\n            path: /home/localregistry/certs/registry.docker.local.key\n            size: 4096\n        - openssl_csr:\n            path: /home/localregistry/certs/registry.docker.local.csr\n            privatekey_path: /home/localregistry/certs/registry.docker.local.key\n            country_name: SI\n            organization_name: XLAB\n            email_address: dragan.radolovic@xlab.si\n            common_name: registry.docker.local\n            subject_alt_name: \"IP:{{ public_ipv4_address }}\"\n        - openssl_certificate:\n            path: /home/localregistry/certs/registry.docker.local.crt\n            csr_path: /home/localregistry/certs/registry.docker.local.csr\n            ownca_path: /home/localregistry/certs/ca.crt\n            ownca_privatekey_path: /home/localregistry/certs/ca.key\n            provider: ownca\n        - file:\n            state: absent\n            path: \"/home/localregistry/certs/ca.key\"\n        - file:\n            state: absent\n            path: \"/home/localregistry/certs/registry.docker.local.csr\"\n\n    - name: Create docker registry\n      docker_container:\n        name: registry\n        restart_policy: always\n        image: \"registry:2\"\n        ports:\n          - \"443:443\"\n        exposed_ports:\n          - \"443\"\n        ca_cert: \"/certs/ca.crt\"\n        client_cert: \"/certs/registry.docker.local.crt\"\n        client_key: \"/certs/registry.docker.local.key\"\n        etc_hosts:\n          registry.docker.local: 127.0.0.1\n        volumes:\n          - \"/home/localregistry/registry:/var/lib/registry\"\n          - \"/home/localregistry/certs:/certs\"\n        env:\n          REGISTRY_HTTP_ADDR: 0.0.0.0:443\n          REGISTRY_HTTP_TLS_CLIENTCAS: \"[/certs/ca.crt]\"\n          REGISTRY_HTTP_TLS_CERTIFICATE: \"/certs/registry.docker.local.crt\"\n          REGISTRY_HTTP_TLS_KEY: \"/certs/registry.docker.local.key\"\n\n  roles:\n    - geerlingguy.repo-epel\n    - geerlingguy.pip\n    - geerlingguy.docker\n"
+                    }
+                ]
+            },
+            {
+                "name": "vm",
+                "type": "dir",
+                "content": [
+                    {
+                        "name": "create.yml",
+                        "type": "file",
+                        "content": "---\n- hosts: all\n  gather_facts: no\n\n  tasks:\n    - name: Create sodalite-xopera-rest security groups and add rules\n      block:\n        - os_security_group:\n            state: present\n            name: sodalite-xopera-rest\n            description: Security group for the xOpera rest api\n        - os_security_group_rule:\n            security_group: sodalite-xopera-rest\n            protocol: tcp\n            port_range_min: 5432\n            port_range_max: 5432\n            remote_ip_prefix: 0.0.0.0/0\n        - os_security_group_rule:\n            security_group: sodalite-xopera-rest\n            protocol: tcp\n            port_range_min: 5000\n            port_range_max: 5000\n            remote_ip_prefix: 0.0.0.0/0\n        - os_security_group_rule:\n            security_group: sodalite-xopera-rest\n            protocol: tcp\n            port_range_min: 443\n            port_range_max: 443\n            remote_ip_prefix: 0.0.0.0/0\n        - os_security_group_rule:\n            security_group: sodalite-xopera-rest\n            protocol: tcp\n            port_range_min: 80\n            port_range_max: 80\n            remote_ip_prefix: 0.0.0.0/0\n    - name: Create sodalite-remote-access security groups and add rules\n      block:\n        - os_security_group:\n            state: present\n            name: sodalite-remote-access\n            description: Security group for sodalite remote access\n        - os_security_group_rule:\n            security_group: sodalite-remote-access\n            protocol: tcp\n            port_range_min: 20\n            port_range_max: 21\n            remote_ip_prefix: 0.0.0.0/0\n        - os_security_group_rule:\n            security_group: sodalite-remote-access\n            protocol: tcp\n            port_range_min: 22\n            port_range_max: 22\n            remote_ip_prefix: 0.0.0.0/0\n\n    - name: Create VM\n      os_server:\n        state: present\n        name: \"{{ vm_name }}\"\n        image: \"{{ image }}\"\n        key_name: \"{{ key_name }}\"\n        flavor: \"{{ flavor }}\"\n        network: \"{{ network }}\"\n        security_groups: \"{{ security_groups }}\"\n      register: server_info\n\n    - name: Set attributes\n      set_stats:\n        data:\n          private_address: \"{{ server_info.server.private_v4 }}\"\n          public_address: \"{{ server_info.server.public_v4 }}\"\n          id: \"{{ server_info.server.id }}\"\n\n    - name: Create temporary invetory for ssh wait\n      add_host:\n        name: server\n        groups: vms\n        ansible_host: \"{{ server_info.server.public_v4 }}\"\n        ansible_user: centos\n        ansible_ssh_common_args: >\n          -o IdentitiesOnly=yes\n          -o BatchMode=yes\n          -o UserKnownHostsFile=/dev/null\n          -o StrictHostKeyChecking=no\n\n- hosts: vms\n  gather_facts: no\n  tasks:\n    - name: Wait for ssh to wake up\n      wait_for_connection:\n"
+                    },
+                    {
+                        "name": "delete.yml",
+                        "type": "file",
+                        "content": "---\n- hosts: all\n  gather_facts: no\n\n  tasks:\n    - name: Delete VM\n      os_server:\n        state: absent\n        name: \"{{ id }}\""
+                    }
+                ]
+            }
+        ]
+    },
+    "config_script": {
+        "name": "no_config",
+        "type": "file",
+        "content": ""
+    },
+    "timestamp": "2020-01-23T18:47:30.951635"
+}

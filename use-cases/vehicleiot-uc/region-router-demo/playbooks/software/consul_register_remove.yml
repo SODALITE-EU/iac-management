@@ -1,0 +1,13 @@
+---
+- hosts: all
+  become_user: root
+  become: yes
+
+  tasks:
+    - name: Deregister a service to consul
+      consul:
+        service_id: "{{ service_id }}"
+        state: absent
+
+
+
