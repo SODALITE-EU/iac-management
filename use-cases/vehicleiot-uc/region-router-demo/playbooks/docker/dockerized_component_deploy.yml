@@ -14,7 +14,7 @@
         command: "{{ command }}"
         env: "{{ env }}"
         restart_policy: "{{ restart_policy }}"
-        pull: true
+        pull: "{{ pull }}"
         ports: "{{ ports }}"
         exposed_ports: "{{ exposed_ports }}"
         volumes: "{{ volumes }}" 

@@ -1,5 +1,28 @@
 tosca_definitions_version: tosca_simple_yaml_1_0
 
+data_types:
+    
+  sodalite.types.OpenStack.SecurityRule: 
+    derived_from: tosca.datatypes.Root
+    properties:  
+      protocol: 
+        type: string
+        required: true
+        default: tcp
+        constraints:
+          - valid_values: [ udp, tcp, icmp ]
+      port_range_min:  
+        type: PortDef
+        required: true
+      port_range_max:
+        type: PortDef
+        required: true
+      remote_ip_prefix:
+        type: string
+        required: true
+        default: "0.0.0.0/0"
+
+
 node_types:
 
   sodalite.nodes.DockerHost:
@@ -33,7 +56,7 @@ node_types:
             primary: playbooks/docker/destroy_docker_host.yml
     capabilities:
       host:
-        type: tosca.capabilities.Compute
+        type: tosca.capabilities.Node
         valid_source_types: [ sodalite.nodes.DockerizedComponent ]
 
   sodalite.nodes.DockerizedComponent:
@@ -47,26 +70,35 @@ node_types:
         type: string
         description: Alias name for docker container
         required: false 
+      pull:
+        type: string
+        description: If true, always pull the latest version of an image. Otherwise, will only pull an image when missing.  
+        default: "no"
+        required: false
       command:
         type: list
         description: Commands list for starting the container
-        default: ""
+        default: []
         required: false
       env:
         type: map
         description: Map for docker enviroment variables key-value dictionary
+        default: {}
         required: false
       ports:
         type: list
         description: A list of port bindings for the docker container "exposed:internal" like "8081:8080"
+        default: []
         required: true
       exposed_ports:
         type: list
         description: Exposed ports of the container like "8081" 
+        default: []
         required: true
       volumes:
         type: list
         description: A list of mounted volumes for the docker container "host_path:container_path" like ""/tmp/docker:/tmp""
+        default: []
         required: false
       restart_policy:
         type: string
@@ -82,6 +114,7 @@ node_types:
             ansible_ip:     { default: { get_attribute: [ SELF, host, ansible_ip ] } }
             image_name:     { default: { get_property: [ SELF, image_name ] } }
             alias:          { default: { get_property: [ SELF, alias ] } }
+            pull:           { default: { get_property: [ SELF, pull ] } }
             command:        { default: { get_property: [ SELF, command ] } }
             env:            { default: { get_property: [ SELF, env ] } }
             ports:          { default: { get_property: [ SELF, ports ] } }
@@ -97,30 +130,9 @@ node_types:
             primary: playbooks/docker/dockerized_component_undeploy.yml
     requirements:
       - host:
-          capability: tosca.capabilities.Compute
+          capability: tosca.capabilities.Node
           node: sodalite.nodes.DockerHost
           relationship: tosca.relationships.HostedOn
-
-  sodalite.nodes.OpenStack.SecurityRule: 
-    derived_from: tosca.nodes.Root
-    properties:  
-      protocol: 
-        type: string
-        required: true
-        default: tcp
-        constraints:
-          - valid_values: [ udp, tcp, icmp ]
-      port_range_min:  
-        type: PortDef
-        required: true
-      port_range_max:
-        type: PortDef
-        required: true
-      remote_ip_prefix:
-        type: string
-        required: true
-        default: "0.0.0.0/0"
-
 
   sodalite.nodes.OpenStack.SecurityRules:
     derived_from: tosca.nodes.Root
@@ -139,7 +151,7 @@ node_types:
         constraints:
           - min_length: 1
         entry_schema:
-          type: sodalite.nodes.OpenStack.SecurityRule   
+          type: sodalite.types.OpenStack.SecurityRule   
     interfaces:
       Standard:
         type: tosca.interfaces.node.lifecycle.Standard
@@ -169,6 +181,9 @@ node_types:
       network:
         type: string
         description: OpenStack network id (network names are not accepted)
+      key_name:
+        type: string
+        description: OpenStack SSH key name that should be placed on the VM
       security_groups:
         type: string
         description: OpenStack names of the security groups to which the instance should be added.Comma separated string.
@@ -203,7 +218,8 @@ node_types:
           implementation: playbooks/openstack/vm/delete.yml
     requirements:
       - protected_by:
-          capability: sodalite.nodes.OpenStack.SecurityRules
+          capability: tosca.capabilities.Node
+          node: sodalite.nodes.OpenStack.SecurityRules
           relationship: tosca.relationships.DependsOn
 
 topology_template:
@@ -235,7 +251,7 @@ topology_template:
               port_range_max: 8081
               remote_ip_prefix: 0.0.0.0/0
 
-    vm:
+    snow-vm:
       type: sodalite.nodes.OpenStack.VM
       properties:
         name: snow-vm
@@ -247,36 +263,31 @@ topology_template:
       requirements:
         - protected_by: security-rules-snow
 
-    docker-host:
+    snow-docker-host:
       type: sodalite.nodes.DockerHost
       properties:
         registry_ip: { get_input: docker-registry-ip }
       requirements:
-        - host: vm
+        - host: snow-vm
 
     skyline-extractor:
       type: sodalite.nodes.DockerizedComponent
       properties:
         image_name: snow-skyline-extractor
-        ports: 
-          - "8080:8080"
-        exposed_ports: 
-          - 8080
+        ports: ["8080:8080"]
+        exposed_ports: ["8080"] 
         volumes: 
           - "/tmp/docker:/tmp"
       requirements:
-        - host: docker-host
+        - host: snow-docker-host
 
     skyline-alignment:
       type: sodalite.nodes.DockerizedComponent
       properties:
         image_name: snow-skyline-alignment
-        ports: 
-          - "8081:8080"
-          - "80:8080"
-        exposed_ports: 
-          - 8080
+        ports:  ["8081:8080","80:8080"]
+        exposed_ports: ["8080"]
         volumes: 
           - "/tmp/docker:/tmp"
       requirements:
-        - host: docker-host
+        - host: snow-docker-host

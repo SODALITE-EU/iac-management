@@ -1,5 +1,27 @@
 tosca_definitions_version: tosca_simple_yaml_1_0
 
+data_types:
+
+  sodalite.types.OpenStack.SecurityRule: 
+    derived_from: tosca.datatypes.Root
+    properties:  
+      protocol: 
+        type: string
+        required: true
+        default: tcp
+        constraints:
+          - valid_values: [ udp, tcp, icmp ]
+      port_range_min:  
+        type: tosca.datatypes.network.PortDef
+        required: true
+      port_range_max:
+        type: tosca.datatypes.network.PortDef
+        required: true
+      remote_ip_prefix:
+        type: string
+        required: true
+        default: "0.0.0.0/0"
+
 node_types:
 
   sodalite.nodes.DockerHost:
@@ -33,7 +55,7 @@ node_types:
             primary: playbooks/docker/destroy_docker_host.yml
     capabilities:
       host:
-        type: tosca.capabilities.Compute
+        type: tosca.capabilities.Node
         valid_source_types: [ sodalite.nodes.DockerizedComponent ]
 
   sodalite.nodes.DockerizedComponent:
@@ -47,26 +69,35 @@ node_types:
         type: string
         description: Alias name for docker container
         required: false 
+      pull:
+        type: string
+        description: If true, always pull the latest version of an image. Otherwise, will only pull an image when missing.  
+        default: "no"
+        required: false
       command:
         type: list
         description: Commands list for starting the container
-        default: ""
+        default: []
         required: false
       env:
         type: map
         description: Map for docker enviroment variables key-value dictionary
+        default: {}
         required: false
       ports:
         type: list
         description: A list of port bindings for the docker container "exposed:internal" like "8081:8080"
+        default: []
         required: true
       exposed_ports:
         type: list
         description: Exposed ports of the container like "8081" 
+        default: []
         required: true
       volumes:
         type: list
         description: A list of mounted volumes for the docker container "host_path:container_path" like ""/tmp/docker:/tmp""
+        default: []
         required: false
       restart_policy:
         type: string
@@ -82,6 +113,7 @@ node_types:
             ansible_ip:     { default: { get_attribute: [ SELF, host, ansible_ip ] } }
             image_name:     { default: { get_property: [ SELF, image_name ] } }
             alias:          { default: { get_property: [ SELF, alias ] } }
+            pull:           { default: { get_property: [ SELF, pull ] } }
             command:        { default: { get_property: [ SELF, command ] } }
             env:            { default: { get_property: [ SELF, env ] } }
             ports:          { default: { get_property: [ SELF, ports ] } }
@@ -97,7 +129,7 @@ node_types:
             primary: playbooks/docker/dockerized_component_undeploy.yml
     requirements:
       - host:
-          capability: tosca.capabilities.Compute
+          capability: tosca.capabilities.Node
           node: sodalite.nodes.DockerHost
           relationship: tosca.relationships.HostedOn
 
@@ -145,14 +177,16 @@ node_types:
             primary: playbooks/software/consul_register_remove.yml
     requirements:
       - host:
-          capability: tosca.capabilities.Compute
+          capability: tosca.capabilities.Node
           node: tosca.nodes.Compute
           relationship: tosca.relationships.HostedOn
       - registers_service:
-          capability: tosca.nodes.SoftwareComponent
+          capability: tosca.capabilities.Node
+          node: tosca.nodes.SoftwareComponent
           relationship: tosca.relationships.DependsOn
       - requires_installation:
-          capability: tosca.nodes.SoftwareComponent
+          capability: tosca.capabilities.Node
+          node: tosca.nodes.SoftwareComponent
           relationship: tosca.relationships.DependsOn
 
   sodalite.nodes.software.PipPackagesSetup:
@@ -178,29 +212,9 @@ node_types:
             primary: playbooks/software/pip_remove.yml
     requirements:
       - host:
-          capability: tosca.capabilities.Compute
+          capability: tosca.capabilities.Node
           node: tosca.nodes.Compute
           relationship: tosca.relationships.HostedOn
-
-  sodalite.nodes.OpenStack.SecurityRule: 
-    derived_from: tosca.nodes.Root
-    properties:  
-      protocol: 
-        type: string
-        required: true
-        default: tcp
-        constraints:
-          - valid_values: [ udp, tcp, icmp ]
-      port_range_min:  
-        type: PortDef
-        required: true
-      port_range_max:
-        type: PortDef
-        required: true
-      remote_ip_prefix:
-        type: string
-        required: true
-        default: "0.0.0.0/0"
 
   sodalite.nodes.OpenStack.SecurityRules:
     derived_from: tosca.nodes.Root
@@ -219,7 +233,7 @@ node_types:
         constraints:
           - min_length: 1
         entry_schema:
-          type: sodalite.nodes.OpenStack.SecurityRule   
+          type: sodalite.types.OpenStack.SecurityRule   
     interfaces:
       Standard:
         type: tosca.interfaces.node.lifecycle.Standard
@@ -249,6 +263,9 @@ node_types:
       network:
         type: string
         description: OpenStack network id (network names are not accepted)
+      key_name:
+        type: string
+        description: OpenStack SSH key name that should be placed on the VM
       security_groups:
         type: string
         description: OpenStack names of the security groups to which the instance should be added.Comma separated string.
@@ -283,7 +300,8 @@ node_types:
           implementation: playbooks/openstack/vm/delete.yml
     requirements:
       - protected_by:
-          capability: sodalite.nodes.OpenStack.SecurityRules
+          capability: tosca.capabilities.Node
+          node: sodalite.nodes.OpenStack.SecurityRules
           relationship: tosca.relationships.DependsOn
 
 topology_template:
@@ -300,7 +318,7 @@ topology_template:
     security-rules-vehicle-iot:
       type: sodalite.nodes.OpenStack.SecurityRules
       properties:
-        group_name: vehicle-iot-delete
+        group_name: vehicle-iot
         group_description: "vehicle-iot security group"
         ports:
             rooter_port:
@@ -314,10 +332,10 @@ topology_template:
               port_range_max: 5680
               remote_ip_prefix: 0.0.0.0/0
 
-    vm:
+    vehicle-demo-vm:
       type: sodalite.nodes.OpenStack.VM
       properties:
-        name: vehicle-demo-vm1
+        name: vehicle-demo-vm
         image: centos7
         flavor: m1.small
         network: orchestrator-net
@@ -332,70 +350,68 @@ topology_template:
         packages: 
           - python-consul
       requirements:
-        - host: vm
+        - host: vehicle-demo-vm
 
-    docker-host:
+    vehicle-demo-docker-host:
       type: sodalite.nodes.DockerHost
       properties:
         registry_ip: { get_input: docker-registry-ip }
       requirements:
-        - host: vm
+        - host: vehicle-demo-vm
 
     notification-callback-server:
       type: sodalite.nodes.DockerizedComponent
       properties:
         image_name: linvirt/echo-server
         alias: notification-callback-server
-        command: "http-echo-server 8443"
-        ports: 8443:8443
-        exposed_ports: 8443
+        command: ["http-echo-server 8443"]
+        ports: ["8443:8443"]
+        exposed_ports: ["8443"]
       requirements:
-        - host: docker-host
+        - host: vehicle-demo-docker-host
 
     http-echo-de:
       type: sodalite.nodes.DockerizedComponent
       properties:
         image_name: hashicorp/http-echo
         alias: http-echo-de
-        command: -text="hello from the DE endpoint"
-        ports: 5678:5678
-        exposed_ports: 5678
+        command: [-text="hello from the DE endpoint"]
+        ports: ["5678:5678"]
+        exposed_ports: ["5678"]
       requirements:
-        - host: docker-host
+        - host: vehicle-demo-docker-host
 
-#    http-echo-at:
-#      type: sodalite.nodes.DockerizedComponent
-#      properties:
-#        image_name: hashicorp/http-echo
-#        alias: http-echo-at
-#        command: -text="hello from the AT endpoint"
-#        ports: 5679:5678
-#        exposed_ports: 5679
-#      requirements:
-#        - host: docker-host
+    # http-echo-at:
+    #   type: sodalite.nodes.DockerizedComponent
+    #   properties:
+    #     image_name: hashicorp/http-echo
+    #     alias: http-echo-at
+    #     command: -text="hello from the AT endpoint"
+    #     ports: ["5679:5678"]
+    #     exposed_ports: ["5679"]
+    #   requirements:
+    #     - host: vehicle-demo-docker-host
 
-#    http-echo-it:
-#      type: sodalite.nodes.DockerizedComponent
-#      properties:
-#        image_name: hashicorp/http-echo
-#        alias: http-echo-it
-#        command: -text="hello from the IT endpoint"
-#        ports: 5680:5678
-#        exposed_ports: 5680
-#      requirements:
-#        - host: docker-host
+    # http-echo-it:
+    #   type: sodalite.nodes.DockerizedComponent
+    #   properties:
+    #     image_name: hashicorp/http-echo
+    #     alias: http-echo-it
+    #     command: -text="hello from the IT endpoint"
+    #     ports: ["5680:5678"]
+    #     exposed_ports: ["5680"]
+    #   requirements:
+    #     - host: vehicle-demo-docker-host
 
     consul-agent:
       type: sodalite.nodes.DockerizedComponent
       properties:
         image_name: consul
         alias: consul
-        ports: 
-          - 8500:8500
-        exposed_ports: 
-          - 8500
+        ports: ["8500:8500"]
+        exposed_ports: ["8500"]
       requirements:
-        - host: docker-host
+        - host: vehicle-demo-docker-host
         
     register-service-de:
       type: sodalite.nodes.software.Register2consul
@@ -404,11 +420,9 @@ topology_template:
         service_name: api
 #        service_address: "{{ansible_default_ipv4.address}}"
         service_port: 5678
-        tags:
-          - v1
-          - region-de
+        tags: ["v1", "region-de"]
       requirements:
-        - host: vm
+        - host: vehicle-demo-vm
         - registers_service: http-echo-de
         - requires_installation: pip-setup  
 
@@ -419,11 +433,9 @@ topology_template:
 #        service_name: "api"
 ##        service_address: "{{ansible_default_ipv4.address}}"
 #        service_port: 5679
-#        tags:
-#          - v1
-#          - region-at
+#        tags: ["v1", "region-at"]
 #      requirements:
-#        - host: vm        
+#        - host: vehicle-demo-vm        
 #        - registers_service: http-echo-at
 
 #    register-service-it:
@@ -433,11 +445,9 @@ topology_template:
 #        service_name: "api"
 ##        service_address: "{{ansible_default_ipv4.address}}"
 #        service_port: 5680
-#        tags:
-#          - v1
-#          - region-it
+#        tags: ["v1", "region-it"]
 #      requirements:
-#        - host: vm        
+#        - host: vehicle-demo-vm        
 #        - registers_service: http-echo-it
 
 
@@ -446,40 +456,34 @@ topology_template:
       properties:
         image_name: adaptant/reverse-geocoding-service
         alias: reverse-geocoding-service
-        command: "--consul-agent {{ansible_default_ipv4.address}}:8500"
-        ports: 
-          - 4041:4041
-        exposed_ports: 
-          - 4041
+        command: ["--consul-agent {{ansible_default_ipv4.address}}:8500"]
+        ports: ["4041:4041"]
+        exposed_ports: ["4041"]
       requirements:
-        - host: docker-host
+        - host: vehicle-demo-docker-host
 
     notification-server:
       type: sodalite.nodes.DockerizedComponent
       properties:
         image_name: linvirt/echo-server
         alias: notification-callback-server
-        command: "http-echo-server 8443"
-        ports:  
-          - 8443:8443
-        exposed_ports: 
-          - 8443
+        command: ["http-echo-server 8443"]
+        ports: ["8443:8443"]
+        exposed_ports: ["8443"]
       requirements:
-        - host: docker-host
+        - host: vehicle-demo-docker-host
 
     go-region-router:
       type: sodalite.nodes.DockerizedComponent
       properties:
         image_name: adaptant/go-region-router:notifications
         alias: go-region-router
-        command: "--consul-agent {{ansible_default_ipv4.address}}:8500"
+        command: ["--consul-agent {{ansible_default_ipv4.address}}:8500"]
         restart_policy: "always"
         env:
           REVERSE_GEOCODING_SERVICE: "{{ansible_default_ipv4.address}}:4041"
           REGION_ROUTER_NOTIFICATION_URL: "{{ansible_default_ipv4.address}}:8443"
-        ports: 
-          - 7000:7000
-        exposed_ports: 
-          - 7000
+        ports: ["7000:7000"]
+        exposed_ports: ["7000"]
       requirements:
-        - host: docker-host
+        - host: vehicle-demo-docker-host
