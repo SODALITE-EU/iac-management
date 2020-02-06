@@ -1,4 +1,4 @@
-tosca_definitions_version: tosca_simple_yaml_1_0
+tosca_definitions_version: tosca_simple_yaml_1_2
 
 node_types:
 
@@ -13,7 +13,7 @@ node_types:
         type: string
     capabilities:
       host:
-        type: tosca.capabilities.Compute
+        type: tosca.capabilities.Container # Should be tosca.capabilities.Compute, but parses does not yet support 1.3
         valid_source_types: [my.nodes.hpc.job.torque]
 
   my.nodes.hpc.job.torque: 
@@ -24,7 +24,7 @@ node_types:
     requirements:
       - host:
           node: my.nodes.hpc.wm.torque
-          capability: tosca.capabilities.Compute
+          capability: tosca.capabilities.Container # Should be tosca.capabilities.Compute, but parses does not yet support 1.3
           relationship: my.relationships.jobHostedOn
     properties:
       name:

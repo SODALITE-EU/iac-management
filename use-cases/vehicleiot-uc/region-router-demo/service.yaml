@@ -1,4 +1,4 @@
-tosca_definitions_version: tosca_simple_yaml_1_0
+tosca_definitions_version: tosca_simple_yaml_1_2
 
 node_types:
 
@@ -33,7 +33,7 @@ node_types:
             primary: playbooks/docker/destroy_docker_host.yml
     capabilities:
       host:
-        type: tosca.capabilities.Compute
+        type: tosca.capabilities.Container # Should be tosca.capabilities.Compute, but parses does not yet support 1.3
         valid_source_types: [ sodalite.nodes.DockerizedComponent ]
 
   sodalite.nodes.DockerizedComponent:
@@ -97,7 +97,7 @@ node_types:
             primary: playbooks/docker/dockerized_component_undeploy.yml
     requirements:
       - host:
-          capability: tosca.capabilities.Compute
+          capability: tosca.capabilities.Container # Should be tosca.capabilities.Compute, but parses does not yet support 1.3
           node: sodalite.nodes.DockerHost
           relationship: tosca.relationships.HostedOn
 
@@ -145,7 +145,7 @@ node_types:
             primary: playbooks/software/consul_register_remove.yml
     requirements:
       - host:
-          capability: tosca.capabilities.Compute
+          capability: tosca.capabilities.Container # Should be tosca.capabilities.Compute, but parses does not yet support 1.3
           node: tosca.nodes.Compute
           relationship: tosca.relationships.HostedOn
       - registers_service:
@@ -178,7 +178,7 @@ node_types:
             primary: playbooks/software/pip_remove.yml
     requirements:
       - host:
-          capability: tosca.capabilities.Compute
+          capability: tosca.capabilities.Container # Should be tosca.capabilities.Compute, but parses does not yet support 1.3
           node: tosca.nodes.Compute
           relationship: tosca.relationships.HostedOn
 
