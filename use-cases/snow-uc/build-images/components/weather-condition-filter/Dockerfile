@@ -2,27 +2,26 @@ FROM ubuntu
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-#Get Weather Condition Filter SECRET REQUIRED
+# Get Weather Condition Filter
+# clone https://gitlab.com/wds-co/SnowWatch-SODALITE.git to build context before building
+COPY SnowWatch-SODALITE/WeatherConditionFilter/ SnowWatch-SODALITE/WeatherConditionFilter/
+COPY SnowWatch-SODALITE/config.json SnowWatch-SODALITE/config.json
+
+WORKDIR SnowWatch-SODALITE/WeatherConditionFilter/
+
+# Install Python and python reqs
+RUN apt update && \
+    apt install -y python3-pip && \
+    pip3 install --upgrade pip && \
+    pip3 install -r requirements.txt
+
+#Install Mysql and some packages for openCV
 RUN apt-get update && \
-    apt install -y git-all && \ 
-    git clone https://gitlab.com/wds-co/SnowWatch-SODALITE && \
-    #cd WeatherConditionFilter
+    apt-get -y install libsm6 libxext6 libxrender-dev mysql-server && \
+    python3 config.py && \
+    apt-get clean;
 
-
-#Install Python and python reqs.
-RUN apt-get update && \
-    apt-get -y install python && \
-    apt-get -y install curl && \
-    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
-    python get-pip.py && \
-    pip install -r SnowWatch-SODALITE/WeatherConditionFilter/requirements.txt
-
-
-#Install Mysql SECRET REQUIRED
-RUN apt-get update && \
-    apt-get -y install mysql-server python-mysqldb && \
-    python config.py
-    mysql -u root -p && \
-    apt-get clean
+ENTRYPOINT ["python3", "main.py"]
+CMD ["2019-12-04", "6666"]
 
 

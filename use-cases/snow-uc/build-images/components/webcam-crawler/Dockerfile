@@ -2,18 +2,16 @@ FROM ubuntu
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-#Get Webcam Crawler SECRET REQUIRED
-RUN apt-get update && \
-    apt install -y git-all && \ 
-    git clone https://gitlab.com/wds-co/SnowWatch-SODALITE && \
-    #cd WebCamCrawler
+# Get Webcam Crawler
+# clone https://gitlab.com/wds-co/SnowWatch-SODALITE.git to build context before building
+COPY SnowWatch-SODALITE/WebCamCrawler/ SnowWatch-SODALITE/WebCamCrawler/
+COPY SnowWatch-SODALITE/config.json SnowWatch-SODALITE/config.json
 
-#change db file with our credentials
 
-#Install Mysql SECRET REQUIRED
+
+#Install Mysql
 RUN apt-get update && \
-    apt-get install mysql-server && \
-    mysql -u root -p < db/wc_crawler.sql && \
+    apt-get -y install mysql-server && \
     apt-get clean;
 
 #Install Nodejs
@@ -31,3 +29,11 @@ RUN source $NVM_DIR/nvm.sh \
     && nvm install $NODE_VERSION \
     && nvm alias default $NODE_VERSION \
     && nvm use default
+
+WORKDIR SnowWatch-SODALITE/WebCamCrawler/
+
+ENV PATH $PATH:/usr/local/nvm/versions/node/v8.9.4/bin
+
+ENTRYPOINT ["node", "index.js"]
+CMD ["1,2,3,4,5"]
+
