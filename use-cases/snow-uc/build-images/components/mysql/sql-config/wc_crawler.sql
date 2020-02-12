@@ -84,4 +84,3 @@ CREATE TABLE `sw_wc_webcam_shot` (
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2019-10-14 10:44:36
-CREATE USER 'nativeuser'@'localhost'IDENTIFIED WITH mysql_native_password BY 'password';
