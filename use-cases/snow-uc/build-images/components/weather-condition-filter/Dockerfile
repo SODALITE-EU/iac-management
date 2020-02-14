@@ -5,6 +5,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 # Get Weather Condition Filter
 # clone https://gitlab.com/wds-co/SnowWatch-SODALITE.git to build context before building
 COPY SnowWatch-SODALITE/WeatherConditionFilter/ SnowWatch-SODALITE/WeatherConditionFilter/
+COPY SnowWatch-SODALITE/data/masks/ SnowWatch-SODALITE/data/masks/
 COPY SnowWatch-SODALITE/config.json SnowWatch-SODALITE/config.json
 
 WORKDIR SnowWatch-SODALITE/WeatherConditionFilter/
