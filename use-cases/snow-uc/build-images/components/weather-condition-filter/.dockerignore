@@ -1,1 +1,5 @@
 Builds/*
+SnowWatch-SODALITE/*
+! SnowWatch-SODALITE/WeatherConditionFilter/*
+! SnowWatch-SODALITE/data/masks/*
+! SnowWatch-SODALITE/config.json

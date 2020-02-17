@@ -1,1 +1,4 @@
 Builds/*
+SnowWatch-SODALITE/*
+! SnowWatch-SODALITE/WebCamCrawler/*
+! SnowWatch-SODALITE/config.json

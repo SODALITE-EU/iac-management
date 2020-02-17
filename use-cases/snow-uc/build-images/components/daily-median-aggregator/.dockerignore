@@ -1,1 +1,4 @@
 Builds/*
+SnowWatch-SODALITE/*
+! SnowWatch-SODALITE/DailyMedianAggregator/*
+! SnowWatch-SODALITE/config.json

@@ -15,13 +15,13 @@ The simplest way to run xOpera is to install it into virtual environment with op
 ```
 $ mkdir ~/opera && cd ~/opera
 $ python3 -m venv .venv && . .venv/bin/activate
-(.venv) $pip install "opera[openstack]<0.5"
+(.venv) $ pip install "opera[openstack]<0.5"
 ```
 Before using the OpenStack functionality through xOpera, obtaining OpenStack API access credentials is necessary. After logging into OpenStack Dashboard and navigating to the `Access & Security` -> `API Access page`, one can download the rc file with all required information.
 
 At the start of each session (e.g., when we open a new command line console), sourcing of the rc file is needed by running:
 
-(venv) $ . openstack.rc
+    (venv) $ . openstack.rc
 
 After entering the password, the orchestrator is ready to start using the OpenStack modules in playbooks that implement lifecycle operations.
 

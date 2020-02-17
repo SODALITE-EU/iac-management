@@ -12,8 +12,8 @@ WORKDIR SnowWatch-SODALITE/DailyMedianAggregator/
 # Install Python and python reqs
 RUN apt update && \
     apt install -y python3-pip && \
-    pip3 install --upgrade pip && \
-    pip3 install -r requirements.txt
+    python3 -m pip install --upgrade pip && \
+    python3 -m pip install -r requirements.txt
 
 # Install MYSQL and some packages for openCV
 RUN apt-get update && \
