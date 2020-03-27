@@ -22,6 +22,12 @@ node_types:
       key_name:
         type: string
         description: OpenStack SSH key name that should be placed on the VM
+      boot_from_volume:
+        type: boolean
+        description: Mount volume
+      volume_size:
+        type: integer
+        description: Size of volume to mount
     attributes:
       id:
         type: string
@@ -43,6 +49,8 @@ node_types:
             network:  { default: { get_property: [ SELF, network  ] } }
             security_groups:  { default: { get_property: [ SELF, security_groups  ] } }
             key_name: { default: { get_property: [ SELF, key_name ] } }
+            boot_from_volume: { default: { get_property: [ SELF, boot_from_volume ] } }
+            volume_size: { default: { get_property: [ SELF, volume_size ] } }
           implementation: playbooks/vm/create.yml
         delete:
           inputs:
@@ -76,9 +84,11 @@ topology_template:
         name: docker-registry
         image: centos7
         flavor: m1.medium
-        network: orchestrator-net
+        network: orchestrator-network
         security_groups: default,sodalite-xopera-rest,sodalite-remote-access
         key_name: { get_input: xopera-key-name}
+        boot_from_volume: True
+        volume_size: 100
 
     docker:
       type: my.nodes.Docker

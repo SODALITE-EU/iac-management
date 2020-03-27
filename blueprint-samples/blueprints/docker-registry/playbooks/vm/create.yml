@@ -61,6 +61,8 @@
         flavor: "{{ flavor }}"
         network: "{{ network }}"
         security_groups: "{{ security_groups }}"
+        boot_from_volume: "{{ boot_from_volume }}"
+        volume_size: "{{ volume_size }}"
       register: server_info
 
     - name: Set attributes
