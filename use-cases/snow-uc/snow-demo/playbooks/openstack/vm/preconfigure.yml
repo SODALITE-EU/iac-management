@@ -1,0 +1,37 @@
+- hosts: all
+  become: yes
+  tasks:  
+    - name: add config files to host
+      block:
+      - file: path=/tmp/conf state=directory
+      - file: path=/tmp/conf/config.json state=absent
+      - copy:
+          content:          |
+                            {
+                              "dbUpdateTimeout": 30000,
+                              "imageUpdateTimeout": 60000,
+                              "hashReadBytes": 10000,
+                              "httpTimeout": 120000,
+                              "pathShots": "../data/shots/",
+                              "shots_folder": "../data/shots/",
+                              "daily_shots_folder": "../data/daily_shots/",
+                              "webcam_masks_folder": "../data/masks/",
+                              "skyline_extraction_service": "http://{{ remote_server }}:8080/skyline_extraction/process",
+                              "skyline_alignement_service": "http://{{ remote_server }}:8081/skyline_alignment/process",
+                              "skyline_render_service": "http://{{ remote_server }}:8081/skyline_alignment/render",
+                              "output_folder": "../data/output/",
+                              "maxSockets": 400,
+                              "mysql": {
+                                  "host": "mysql",
+                                  "user": "root",
+                                  "password": "nahime27",
+                                  "database": "wc_crawler_db"
+                              },
+                              "database": {
+                                  "host": "mysql",
+                                  "user": "root",
+                                  "password": "nahime27",
+                                  "db_name": "wc_crawler_db"
+                              }
+                            }
+          dest: "/tmp/conf/config.json"
