@@ -18,8 +18,8 @@
           -o UserKnownHostsFile=/dev/null
           -o StrictHostKeyChecking=no
 
-- hosts: wm
-  gather_facts: no
+- hosts: wm # should be ansible module for Torque to handle jobs and their states
+  gather_facts: yes
   vars:
     epoch: "00:00:00"
     walltime: "{{ job_walltime }}"
@@ -28,9 +28,12 @@
     monitor_delay_step: "{{ (monitor_period / 2) | round | int }}" # each step is half of overall delay
     monitor_retries_headroom: "{{ job_monitor_retries_headroom }}" # additional retries for long job completion
     monitor_retries: "{{ (walltime_sec | int /  monitor_period) | round | int + monitor_retries_headroom }}"
+    job_workspace_path: '{{ ( job_workspace != None ) | ternary(job_workspace, ansible_env.HOME) }}'
   tasks:
     - name: Submit the job
-      shell: qsub {{ job_name }}
+      shell: qsub {{ job_name }}.pbs
+      args:
+        chdir: "{{ job_workspace_path }}"
       register: job
 
     - name: Saving job_id
@@ -62,3 +65,16 @@
       set_stats:
         data:
           state: "deleted"
+
+    - name: Check the exit status
+      shell: qstat -f {{ job_id }} | grep 'exit_status' | grep -o '.$'
+      register: job_exit_status
+
+    # Do some failure mitigation actions here
+    - name: React to the error
+      shell: echo "Here should be failure management"
+      when: "job_exit_status.stdout != '0'"
+
+    - fail:
+        msg: "Job stopped with non-zero exit {{ job_exit_status.stdout }}"
+      when: "job_exit_status.stdout != '0'"
