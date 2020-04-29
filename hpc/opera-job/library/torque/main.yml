@@ -31,11 +31,11 @@ node_types:
         type: string
         description: Name of the job
         required: true
-      script_template:
+      script:
         type: string
         description: >
-          Job script template with j2 extension, 
-          such that Ansible can process it with the template module
+          Job script that will be wrapped with j2 template to provide a PBS job script, 
+          Ansible can process it with the template module
         required: true
       workspace:
         type: string
@@ -45,6 +45,7 @@ node_types:
         type: string
         description: >
           Job status will be notified to this email
+        default: ""
       nb_nodes:
         type: integer
         description: >
@@ -72,9 +73,16 @@ node_types:
       monitor_retries_headroom:
         type: integer
         default: 2
+      enable_audit:
+        type: boolean
+        default: false
     attributes:
       job_id:
         type: string
+        default: ""
+      audit:
+        type: string
+        default: ""
     interfaces:
       Standard:
         type: tosca.interfaces.node.lifecycle.Standard
@@ -87,21 +95,22 @@ node_types:
               wm_keypath: { default: { get_attribute: [SELF, host, ssh-key] } }
               # Conditionals or default values will help to get rid of properties that are not used in playbooks
               job_name: { default: { get_property: [SELF, name] } }
-              job_script_template: { default: { get_property: [SELF, script_template] } }
+              job_script: { default: { get_property: [SELF, script] } }
               job_workspace: { default: { get_property: [SELF, workspace] } }
               job_email: { default: { get_property: [SELF, email] } }
               job_nb_nodes: { default: { get_property: [SELF, nb_nodes] } }
               job_ppn: { default: { get_property: [SELF, ppn] } }
               job_gpus: { default: { get_property: [SELF, gpus] } }
               job_walltime: { default: { get_property: [SELF, walltime] } }
-            implementation: playbooks/torque-job/create.yml
+              job_enable_audit: { default: { get_property: [SELF, enable_audit] } }
+            implementation: torque-job/playbooks/create.yml
           configure:
             inputs:
               wm_public_address: { default: { get_attribute: [SELF, host, public_address] } }
               wm_username: { default: { get_attribute: [SELF, host, username] } }
               wm_keypath: { default: { get_attribute: [SELF, host, ssh-key] } }
               job_workspace: { default: { get_property: [SELF, workspace] } }
-            implementation: playbooks/torque-job/configure.yml
+            implementation: torque-job/playbooks/configure.yml
           start:
             inputs:
               wm_public_address: { default: { get_attribute: [SELF, host, public_address] } }
@@ -112,7 +121,8 @@ node_types:
               job_walltime: { default: { get_property: [SELF, walltime] } }
               job_monitor_period: { default: { get_property: [SELF, monitor_period] } }
               job_monitor_retries_headroom: { default: { get_property: [SELF, monitor_retries_headroom] } }
-            implementation: playbooks/torque-job/start.yml
+              job_enable_audit: { default: { get_property: [SELF, enable_audit] } }
+            implementation: torque-job/playbooks/start.yml
 
 relationship_types:
 
@@ -130,4 +140,4 @@ relationship_types:
               # Conditionals or default values will help to get rid of properties that are not used in playbooks
               job_name: { default: { get_property: [SELF, name] } }
             implementation:
-              primary: playbooks/torque-job/dummy-relation-interface.yml
+              primary: torque-job/playbooks/dummy-relation-interface.yml

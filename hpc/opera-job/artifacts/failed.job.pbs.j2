@@ -1,9 +1,0 @@
-#PBS -S /bin/bash
-#PBS -m abe
-#PBS -N {{ job_name }}
-#PBS -l nodes={{ job_nb_nodes }}:ppn={{ job_ppn }},walltime={{ job_walltime }},gpus={{ job_gpus }}
-
-sleep 10
-echo $(date) | tee {{ job_name }}
-
-exit 1

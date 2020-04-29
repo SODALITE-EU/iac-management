@@ -78,3 +78,23 @@
     - fail:
         msg: "Job stopped with non-zero exit {{ job_exit_status.stdout }}"
       when: "job_exit_status.stdout != '0'"
+
+    # audit.yml is not copied to /tmp by xOpera, therefore the location should be hardcoded
+    # - name: Audit the job
+    #   include: audit.yml 
+    #   when: job_enable_audit
+
+    - name: Audit the job
+      block:
+        - name: Register audit statistics
+          slurp:
+            src: "{{ job_workspace_path }}/{{ job_name }}.stat"
+          register: audit
+        - debug:
+            msg: "{{ audit['content'] | b64decode | from_yaml }}"
+        - name: save audit attribute
+          set_stats:
+            data:
+              audit: "{{ audit['content'] | b64decode | from_yaml }}"
+      
+      when: job_enable_audit

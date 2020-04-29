@@ -1,0 +1,2 @@
+export XOPERA_ARTIFACTS_LOCATION=$(pwd)/artifacts
+export XOPERA_LIBRARY_LOCATION=$(pwd)/library

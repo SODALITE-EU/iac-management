@@ -31,9 +31,8 @@ topology_template:
       type: sodalite.nodes.hpc.job.torque
       properties:
         name: hpc-test-1
-        script_template: ${XOPERA_ARTIFACTS_LOCATION}/job.pbs.j2 # no support for concat intrinsic function - { concat: [ { get_input: artifacts-location }, "/", job.pbs.j2 ] }
+        script: ${XOPERA_ARTIFACTS_LOCATION}/job.sh # no support for concat intrinsic function - { concat: [ { get_input: artifacts-location }, "/", job.sh ] }
         workspace: ~
-        email: { get_input: email }
         nb_nodes: 1
         ppn: 20
         walltime: 00:30:00
@@ -44,12 +43,13 @@ topology_template:
       type: sodalite.nodes.hpc.job.torque
       properties:
         name: hpc-test-4
-        script_template: ${XOPERA_ARTIFACTS_LOCATION}/job.pbs.j2 # no support for concat intrinsic function - { concat: [ { get_input: artifacts-location }, "/", job.pbs.j2 ] }
+        script: ${XOPERA_ARTIFACTS_LOCATION}/job.sh # no support for concat intrinsic function - { concat: [ { get_input: artifacts-location }, "/", job.sh ] }
         workspace: ~
         email: { get_input: email }
         nb_nodes: 1
         ppn: 20
         walltime: 00:30:00
+        enable_audit: true
       requirements:
         - host: hpc-wm-torque
         - dependency: hpc-job-torque-2
@@ -59,9 +59,8 @@ topology_template:
       type: sodalite.nodes.hpc.job.torque
       properties:
         name: hpc-test-2
-        script_template: ${XOPERA_ARTIFACTS_LOCATION}/job.pbs.j2 # no support for concat intrinsic function - { concat: [ { get_input: artifacts-location }, "/", job.pbs.j2 ] }
+        script: ${XOPERA_ARTIFACTS_LOCATION}/job.sh # no support for concat intrinsic function - { concat: [ { get_input: artifacts-location }, "/", job.sh ] }
         workspace: ~
-        email: { get_input: email }
         nb_nodes: 1
         ppn: 20
         walltime: 00:30:00
@@ -73,13 +72,27 @@ topology_template:
       type: sodalite.nodes.hpc.job.torque
       properties:
         name: hpc-test-3
-        script_template: ${XOPERA_ARTIFACTS_LOCATION}/failed.job.pbs.j2 # no support for concat intrinsic function - { concat: [ { get_input: artifacts-location }, "/", job.pbs.j2 ] }
+        # script: ${XOPERA_ARTIFACTS_LOCATION}/failed.job.sh # if you want to fail the job
+        script: ${XOPERA_ARTIFACTS_LOCATION}/job.sh # no support for concat intrinsic function - { concat: [ { get_input: artifacts-location }, "/", job.sh ] }
         workspace: ~
-        email: { get_input: email }
         nb_nodes: 1
         ppn: 20
         walltime: 00:30:00
       requirements:
         - host: hpc-wm-torque
         - dependency: hpc-job-torque-1
-        
+    
+
+  outputs:
+    job-1-audit:
+      description: Job 1 audit values
+      value: { get_attribute: [ hpc-job-torque-1, audit ] }
+    job-2-audit:
+      description: Job 2 audit values
+      value: { get_attribute: [ hpc-job-torque-2, audit ] }
+    job-3-audit:
+      description: Job 3 audit values
+      value: { get_attribute: [ hpc-job-torque-3, audit ] }
+    job-4-audit:
+      description: Job 4 audit values
+      value: { get_attribute: [ hpc-job-torque-4, audit ] }
