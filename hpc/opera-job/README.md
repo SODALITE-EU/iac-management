@@ -1,12 +1,14 @@
 # Usage
 
+Assuming the xOpera was installed in a venv (see instruction [here](https://github.com/xlab-si/xopera-opera)) 
+
 ```
-$ . opera.rc
-$ make
-$ make deploy
-$ make outputs-yaml
-$ make outputs-json
-$ make clean
+(.venv) $ . opera.rc
+(.venv) $ make
+(.venv) $ make deploy
+(.venv) $ make outputs-yaml
+(.venv) $ make outputs-json
+(.venv) $ make clean
 ```
 
 # Notes

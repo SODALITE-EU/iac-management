@@ -8,5 +8,5 @@
     msg: "{{ audit['content'] | b64decode | from_yaml }}"
 
 - set_stats:
-  data:
-    audit: "{{ audit['content'] | b64decode | from_yaml }}"
+    data:
+      audit: "{{ audit['content'] | b64decode | from_yaml }}"
