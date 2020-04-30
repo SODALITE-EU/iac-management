@@ -1,0 +1,114 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+# Example description: TOSCA declarative workflow generation constraint the workflow so that no operations are called in parallel on the same host. 
+# Looking at the following topology this means that the hpc-job-torque-1 and hpc-job-torque-2 nodes will not be created in parallel but sequentially. 
+# For the effective deployment of HPC jobs, they must run in parallel.
+# Short example of custom workflow, "delegates" the deployment to the orchestrator.
+# "on_success" defines the next steps to be executed in parallel.
+
+imports:
+  - ../opera-job/library/torque/main.yml
+
+topology_template:
+
+  inputs:
+    artifacts-location:
+      type: string
+    frontend-address:
+      type: string
+    user:
+      type: string
+    key-location:
+      type: string
+    email:
+      type: string
+
+  node_templates:
+
+    hpc-wm-torque:
+      type: sodalite.nodes.hpc.wm.torque
+      attributes:
+        public_address: { get_input: frontend-address }
+        username: { get_input: user }
+        ssh-key: { get_input: key-location }
+
+    hpc-job-torque-1:
+      type: sodalite.nodes.hpc.job.torque
+      properties:
+        name: hpc-test-1
+        script: ${XOPERA_ARTIFACTS_LOCATION}/job.sh # no support for concat intrinsic function - { concat: [ { get_input: artifacts-location }, "/", job.sh ] }
+        workspace: ~
+        nb_nodes: 1
+        ppn: 20
+        walltime: 00:30:00
+      requirements:
+        - host: hpc-wm-torque
+
+    hpc-job-torque-2:
+      type: sodalite.nodes.hpc.job.torque
+      properties:
+        name: hpc-test-2
+        script: ${XOPERA_ARTIFACTS_LOCATION}/job.sh # no support for concat intrinsic function - { concat: [ { get_input: artifacts-location }, "/", job.sh ] }
+        workspace: ~
+        nb_nodes: 1
+        ppn: 20
+        walltime: 00:30:00
+      requirements:
+        - host: hpc-wm-torque
+
+
+  workflows:
+
+    parallel-deploy-delegate:
+      description: Override the TOSCA declarative workflow with the following.
+      steps:
+        wm-install
+          target: hpc-wm-torque
+          activities:
+            - delegate: deploy
+          on_success:
+            - job-1-install
+            - job-2-install
+        job-1-install:
+          target: hpc-job-torque-1
+          activities:
+            - delegate: deploy
+        job-2-install:
+          target: hpc-job-torque-2
+          activities:
+            - delegate: deploy
+
+    parallel-deploy-extended:
+      description: Override the TOSCA declarative workflow with the following.
+      steps:
+        wm-install
+          target: hpc-wm-torque
+          activities:
+            - delegate: deploy
+          on_success:
+            - job-1-install
+            - job-2-install
+        job-1-install:
+          target: hpc-job-torque-1
+          activities:
+            - set_state: creating
+            - call_operation: tosca.interfaces.node.lifecycle.Standard.create
+            - set_state: created
+            - set_state: configuring
+            - call_operation: tosca.interfaces.node.lifecycle.Standard.configure
+            - set_state: configured
+            - set_state: starting
+            - call_operation: tosca.interfaces.node.lifecycle.Standard.start
+            - set_state: started
+        job-2-install:
+          target: hpc-job-torque-2
+          activities:
+            - set_state: creating
+            - call_operation: tosca.interfaces.node.lifecycle.Standard.create
+            - set_state: created
+            - set_state: configuring
+            - call_operation: tosca.interfaces.node.lifecycle.Standard.configure
+            - set_state: configured
+            - set_state: starting
+            - call_operation: tosca.interfaces.node.lifecycle.Standard.start
+            - set_state: started
