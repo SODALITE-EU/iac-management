@@ -62,7 +62,7 @@ topology_template:
     parallel-deploy-delegate:
       description: Override the TOSCA declarative workflow with the following.
       steps:
-        wm-install
+        wm-install:
           target: hpc-wm-torque
           activities:
             - delegate: deploy
@@ -81,7 +81,7 @@ topology_template:
     parallel-deploy-extended:
       description: Override the TOSCA declarative workflow with the following.
       steps:
-        wm-install
+        wm-install:
           target: hpc-wm-torque
           activities:
             - delegate: deploy
