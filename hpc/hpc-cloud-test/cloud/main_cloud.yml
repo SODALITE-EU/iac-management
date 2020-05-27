@@ -1,0 +1,74 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+node_types: 
+
+  sodalite.nodes.OpenStack.VM:  
+    derived_from: tosca.nodes.Compute 
+    properties:  
+      network:  
+        description: OpenStack network id (network names are not accepted) 
+        type: string 
+      name:  
+        description: Name that should be given to the VM in OpenStack 
+        type: string 
+      security_groups:  
+        description: OpenStack names of the security groups to which the instance should be added.Comma separated string. 
+        type: string 
+      flavor:  
+        description: OpenStack flavor id (flavor names are not accepted) 
+        type: string 
+      image:  
+        description: OpenStack image id (image names are not accepted) 
+        type: string 
+      key_name:  
+        description: OpenStack SSH key name that should be placed on the VM 
+        type: string 
+    attributes:  
+      tosca_id:  
+        description: A unique identifier of the realized instance of a Node Template that derives from any TOSCA normative type 
+        type: string 
+      networks:  
+        description: The list of logical networks assigned to the compute host instance and information about them. 
+        type: map 
+      entry_schema:  
+        type: tosca.datatypes.network.NetworkInfo 
+      id:  
+        description: OpenStack id of the VM 
+        type: string 
+      tosca_name:  
+        description: Reflects the name of the Node Template as defined in the TOSCA service template. This name is not unique to the realized instance model of corresponding deployed application as each template in the model can result in one or more instances (e.g., scaled) when orchestrated to a provider environment. 
+        type: string 
+      state:  
+        description: The state of the node instance. 
+        type: string 
+      ansible_ip:  
+        description: ansible ipv4 
+        type: string 
+      public_address:  
+        description: The primary public IP address assigned by the cloud provider that applications may use to access the Compute node. 
+        type: string 
+      private_address:  
+        description: The primary private IP address assigned by the cloud provider that applications may use to access the Compute node. 
+        type: string 
+      ports:  
+        description: The list of logical ports assigned to the compute host instance and information about them. 
+        type: map 
+        entry_schema:  
+          type: tosca.datatypes.network.PortInfo 
+    interfaces:  
+      Standard:  
+        type: tosca.interfaces.node.lifecycle.Standard 
+        operations:  
+          create:  
+            inputs:  
+              network: { default: { get_property: [ SELF, network  ] } } 
+              flavor: { default: { get_property: [ SELF, flavor   ] } } 
+              key_name: { default: { get_property: [ SELF, key_name ] } } 
+              image: { default: { get_property: [ SELF, image    ] } } 
+              security_groups: { default: { get_property: [ SELF, security_groups  ] } } 
+              vm_name: { default: { get_property: [ SELF, name     ] } } 
+            implementation: playbooks/openstack/vm/create.yml 
+          delete:  
+            inputs:  
+              id: { default: { get_attribute: [ SELF, id ] } } 
+            implementation: playbooks/openstack/vm/delete.yml 

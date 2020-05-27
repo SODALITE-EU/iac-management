@@ -1,0 +1,10 @@
+- hosts: all
+  become: yes
+  tasks:  
+  - name: add files to host
+    block:
+    - file: path=/tmp/audit state=directory
+    - file: path=/tmp/audit/audit.stat state=absent
+    - copy:
+        src: "/tmp/{{ job_name }}.stat"
+        dest: /tmp/audit/audit.stat

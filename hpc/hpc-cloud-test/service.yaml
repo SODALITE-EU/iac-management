@@ -1,0 +1,104 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - torque/main_hpc.yml
+  - cloud/main_cloud.yml
+node_types: 
+
+  sodalite.nodes.Configuration:        
+    derived_from: tosca.nodes.SoftwareComponent
+    requirements:
+      - host:
+          capability: tosca.capabilities.Compute
+          node: sodalite.nodes.OpenStack.VM
+          relationship: tosca.relationships.HostedOn 
+      - job_config:  
+          node: sodalite.nodes.hpc.job.torque.configuration
+          capability: sodalite.capabilities.hpc.ConfiguredJob
+          relationship: tosca.relationships.DependsOn                         
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        operations:       
+          create:         
+            inputs:
+              job_name: { default: { get_property: [SELF, job_config, name] } }
+              job_workspace: { default: { get_property: [SELF, job_config, workspace] } }   
+            implementation:
+              primary: configuration/playbooks/copy.yml
+
+topology_template:
+
+  inputs:
+    frontend-address:
+      type: string
+    user:
+      type: string
+    key-location:
+      type: string
+    email:
+      type: string
+    ssh-key-name:  
+      type: string 
+    image-name:  
+      type: string 
+    network-name:  
+      type: string 
+    security-groups:  
+      type: string    
+    flavor-name:  
+      type: string                   
+
+  node_templates:
+
+  #HPC
+    hpc-wm-torque:
+      type: sodalite.nodes.hpc.wm.torque
+      attributes:
+        public_address: { get_input: frontend-address }
+        username: { get_input: user }
+        ssh-key: { get_input: key-location }
+
+    hpc-job-torque-config:
+      type: sodalite.nodes.hpc.job.torque.configuration
+      properties:
+        name: hpc-test-1
+        script: job.sh 
+        workspace: ~
+        ppn: 20
+        walltime: 00:30:00
+        email: { get_input: email }
+        enable_audit: true
+      requirements:
+        - host: hpc-wm-torque
+
+    hpc-job-torque:
+      type: sodalite.nodes.hpc.job.torque
+      requirements:
+        - host: hpc-wm-torque 
+        - configured_job: hpc-job-torque-config           
+
+#Cloud        
+    cloud-vm:  
+      type: sodalite.nodes.OpenStack.VM 
+      properties:  
+        key_name:  { get_input: ssh-key-name } 
+        image:     { get_input: image-name } 
+        name:  cloud-vm_am
+        network:  { get_input: network-name } 
+        security_groups:  { get_input: security-groups } 
+        flavor:  { get_input: flavor-name }
+
+#Result        
+    hpc-job-torque-result:
+      type: sodalite.nodes.hpc.job.torque.result
+      requirements:
+        - host: hpc-wm-torque
+        - job: hpc-job-torque         
+
+    configuration-job-result:
+      type: sodalite.nodes.Configuration
+      requirements:
+        - host: cloud-vm
+        - job_config: hpc-job-torque-config 
+        - depends: hpc-job-torque-result 
