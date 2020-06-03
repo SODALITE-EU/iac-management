@@ -1,0 +1,154 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - library/torque/main.yml
+
+topology_template:
+
+  inputs:
+    frontend-address:
+      type: string
+    user:
+      type: string
+    key-location:
+      type: string
+    email:
+      type: string
+
+
+  node_templates:
+
+    hpc-wm-torque:
+      type: sodalite.nodes.hpc.wm.torque
+      attributes:
+        public_address: { get_input: frontend-address }
+        username: { get_input: user }
+        ssh-key: { get_input: key-location }
+
+    hpc-node-7:
+      type: sodalite.nodes.hpc.resources.cloud7
+
+    hpc-node-8:
+      type: sodalite.nodes.hpc.resources.cloud8
+
+#jobs configurations
+
+    hpc-job-torque-config-1:
+      type: sodalite.nodes.hpc.job.torque.configuration.node
+      properties:
+        name: hpc-test-1
+        script: job.sh 
+        workspace: ~
+        ppn: 20
+        walltime: 00:30:00
+      requirements:
+        - host: hpc-wm-torque
+        - job_node: hpc-node-8
+
+    hpc-job-torque-config-2:
+      type: sodalite.nodes.hpc.job.torque.configuration.node
+      properties:
+        name: hpc-test-2
+        script: job.sh 
+        workspace: ~
+        ppn: 20
+        walltime: 00:30:00
+      requirements:
+        - host: hpc-wm-torque
+        - job_node: hpc-node-7
+
+    hpc-job-torque-config-3:
+      type: sodalite.nodes.hpc.job.torque.configuration
+      properties:
+        name: hpc-test-3
+        # script: failed.job.sh # if you want to fail the job
+        script: job.sh 
+        workspace: ~
+        ppn: 20
+        walltime: 00:30:00
+      requirements:
+        - host: hpc-wm-torque
+
+    hpc-job-torque-config-4:
+      type: sodalite.nodes.hpc.job.torque.configuration.node
+      properties:
+        name: hpc-test-4
+        script: job.sh 
+        workspace: ~
+        ppn: 20
+        walltime: 00:30:00
+        email: { get_input: email }
+        enable_audit: true
+      requirements:
+        - host: hpc-wm-torque
+        - job_node: hpc-node-7
+
+#jobs
+
+    hpc-job-torque-4: # intentionally put this job out of order to check dependencies
+      type: sodalite.nodes.hpc.job.torque
+      requirements:
+        - host: hpc-wm-torque 
+        - configured_job: hpc-job-torque-config-4           
+        - dependency: hpc-job-torque-2-result
+        - dependency: hpc-job-torque-3-result        
+
+    hpc-job-torque-1:
+      type: sodalite.nodes.hpc.job.torque
+      requirements:
+        - host: hpc-wm-torque 
+        - configured_job: hpc-job-torque-config-1  
+
+    hpc-job-torque-2:
+      type: sodalite.nodes.hpc.job.torque
+      requirements:
+        - host: hpc-wm-torque 
+        - configured_job: hpc-job-torque-config-2 
+        - dependency: hpc-job-torque-1-result 
+        
+    hpc-job-torque-3:
+      type: sodalite.nodes.hpc.job.torque
+      requirements:
+        - host: hpc-wm-torque 
+        - configured_job: hpc-job-torque-config-3
+        - dependency: hpc-job-torque-1-result          
+
+#results
+
+    hpc-job-torque-1-result:
+      type: sodalite.nodes.hpc.job.torque.result
+      requirements:
+        - host: hpc-wm-torque
+        - job: hpc-job-torque-1
+
+    hpc-job-torque-2-result:
+      type: sodalite.nodes.hpc.job.torque.result
+      requirements:
+        - host: hpc-wm-torque
+        - job: hpc-job-torque-2       
+
+    hpc-job-torque-3-result:
+      type: sodalite.nodes.hpc.job.torque.result
+      requirements:
+        - host: hpc-wm-torque
+        - job: hpc-job-torque-3          
+
+    hpc-job-torque-4-result:
+      type: sodalite.nodes.hpc.job.torque.result
+      requirements:
+        - host: hpc-wm-torque
+        - job: hpc-job-torque-4          
+
+  outputs:
+    job-1-audit:
+      description: Job 1 audit values
+      value: { get_attribute: [ hpc-job-torque-1-result, audit ] }
+    job-2-audit:
+      description: Job 2 audit values
+      value: { get_attribute: [ hpc-job-torque-2-result, audit ] }
+    job-3-audit:
+      description: Job 3 audit values
+      value: { get_attribute: [ hpc-job-torque-3-result, audit ] }
+    job-4-audit:
+      description: Job 4 audit values
+      value: { get_attribute: [ hpc-job-torque-4-result, audit ] }
