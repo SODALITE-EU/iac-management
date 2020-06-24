@@ -200,7 +200,7 @@ topology_template:
         exposed_ports:  ['3306']
         alias: mysql
         env:
-          MYSQL_ROOT_PASSWORD: { get_input: mysql-db-pass }
+          MYSQL_ROOT_PASSWORD: #set password here
           MYSQL_DATABASE: wc_crawler_db 
       requirements:  
         - host:  snow-docker-host 
