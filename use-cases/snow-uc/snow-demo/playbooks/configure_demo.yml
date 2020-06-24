@@ -1,0 +1,10 @@
+- hosts: all
+  become: yes
+  tasks:  
+    - name: add config files to host
+      block:
+      - file: path=/tmp/conf state=directory
+      - file: path=/tmp/conf/config.json state=absent
+      - template:
+          src: "config.json.tmpl"
+          dest: "/tmp/conf/config.json"

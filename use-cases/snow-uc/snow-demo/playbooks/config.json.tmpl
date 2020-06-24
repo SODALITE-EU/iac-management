@@ -1,0 +1,27 @@
+{
+    "dbUpdateTimeout": 30000,
+    "imageUpdateTimeout": 60000,
+    "hashReadBytes": 10000,
+    "httpTimeout": 120000,
+    "pathShots": "../data/shots/",
+    "shots_folder": "../data/shots/",
+    "daily_shots_folder": "../data/daily_shots/",
+    "webcam_masks_folder": "../data/masks/",
+    "skyline_extraction_service": "http://{{ remote_server }}:8080/skyline_extraction/process",
+    "skyline_alignement_service": "http://{{ remote_server }}:8081/skyline_alignment/process",
+    "skyline_render_service": "http://{{ remote_server }}:8081/skyline_alignment/render",
+    "output_folder": "../data/output/",
+    "maxSockets": 400,
+    "mysql": {
+        "host": "mysql",
+        "user": "root",
+        "password": "{{ mysql_db_pass }}",
+        "database": "wc_crawler_db"
+    },
+    "database": {
+        "host": "mysql",
+        "user": "root",
+        "password": "{{ mysql_db_pass }}",
+        "db_name": "wc_crawler_db"
+    }
+}

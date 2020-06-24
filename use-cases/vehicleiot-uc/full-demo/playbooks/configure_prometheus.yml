@@ -1,0 +1,16 @@
+- hosts: all
+  become_user: root
+  gather_facts: yes
+  become: yes    
+  vars:
+    project_home: "{{ lookup('env', 'HOME') }}"
+    project_root: "{{ project_home }}/.knowgo"
+  tasks:  
+
+  - name: "Ensuring Prometheus Configuration directory exists in {{ project_root }}/conf/prometheus"
+    file: path={{ project_root }}/conf/prometheus state=directory
+
+  - name: "Generating Prometheus Configuration"
+    template:
+      src: "prometheus.yml.tmpl"
+      dest: "{{ project_root }}/conf/prometheus/prometheus.yml"

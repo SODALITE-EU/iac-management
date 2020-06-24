@@ -1,11 +1,12 @@
 ssh-key-name: alexander_maslennikov
 image-name: "centos-7 x86_64"
 openstack-network-name: xlab
-security-groups: default,snow,remote_access
+security-groups: default,remote_access
 flavor-name: m1.medium
-docker-network: snow
-docker-registry-url: 10.10.43.54
+docker-network: knowgo_net
+dockerhub-user: 
+dockerhub-pass: 
+docker-registry-url: registry.hub.docker.com
 docker-registry-cert-country-name: SI
 docker-registry-cert-organization-name: XLAB
 docker-registry-cert-email-address: 
-mysql-db-pass:  
