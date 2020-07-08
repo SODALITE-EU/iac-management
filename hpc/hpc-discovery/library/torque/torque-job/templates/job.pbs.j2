@@ -17,6 +17,14 @@
 #PBS -l epilogue={{ job_workspace_path }}/audit.sh
 {% endif %}
 
+{% if job_queue %}
+#PBS -q {{ job_scratch }}
+{% endif %}
+
+{% if job_scratch %}
+export SCRATCH={{ job_scratch }}
+{% endif %}
+
 {% for line in lines[1:] %}
 {{ line }}
 {% endfor%}

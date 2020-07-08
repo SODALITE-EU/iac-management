@@ -32,6 +32,22 @@ node_types:
           Job script that will be wrapped with j2 template to provide a PBS job script, 
           Ansible can process it with the template module
         required: true
+      queue:
+        type: string
+        description: >
+          Select queue for the job.
+          Infrastructure specific - default and constraints values MUST be provided by Resource Expert
+        required: false
+        default: "batch"
+        constraints:
+          - valid_values: [ "batch", "ssd", "gpu", "cpu" ]
+      scratch:
+        type: string
+        description: >
+          Select scratch (temporary, fast storage) path for the job, if available.
+          Infrastructure specific - default value MUST be provided by Resource Expert
+        required: false
+        default: "/workspace"
       workspace:
         type: string
         description: Location of the sources and the job script
@@ -86,6 +102,8 @@ node_types:
               # Conditionals or default values will help to get rid of properties that are not used in playbooks
               job_name: { default: { get_property: [SELF, name] } }
               job_script: { default: { get_property: [SELF, script] } }
+              job_queue: { default: { get_property: [SELF, queue] } }
+              job_scratch: { default: { get_property: [SELF, scratch] } }
               job_workspace: { default: { get_property: [SELF, workspace] } }
               job_email: { default: { get_property: [SELF, email] } }
               job_nb_nodes: { default: { get_property: [SELF, nb_nodes] } }
