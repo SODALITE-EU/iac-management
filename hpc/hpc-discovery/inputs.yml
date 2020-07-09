@@ -1,4 +1,4 @@
 frontend-address: sodalite-fe.hlrs.de
-user: 
-key-location: 
-email:
+user: kamil
+key-location: ~/keys/kamil-sodalite-fe
+email: tokmakov@hlrs.de

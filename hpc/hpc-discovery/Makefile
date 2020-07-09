@@ -6,3 +6,6 @@ outputs-json:
 
 outputs-yaml:
 	opera outputs --format yaml
+
+clean:
+	rm -rf .opera
