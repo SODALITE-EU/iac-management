@@ -1,0 +1,128 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - modules/tests/test_definitions.yaml
+  - modules/openstack/openstack_vm.yaml
+  - modules/docker/docker_host.yaml
+  - modules/docker/docker_network.yaml
+  - modules/docker/docker_registry.yaml
+  - modules/docker/docker_component.yaml
+  - modules/docker/docker_certificate.yaml
+
+node_types:
+  sodalite.local.CreateFile:
+    derived_from: tosca.nodes.SoftwareComponent
+    interfaces:
+      Standard:
+        inputs:
+          marker:
+            default: { get_input: marker }
+            type: string
+        operations:
+          create: playbooks/create.yaml
+          delete: playbooks/delete.yaml
+
+topology_template:
+  inputs:
+    marker:
+      type: string
+      default: FooBar
+
+  node_templates:
+    os-workstation:
+      type: sodalite.nodes.OpenStack.VM
+      properties:
+        name: Openstack Unit Test
+        image: 9ea4856a-32b2-4553-b408-cfa4cb1bb40b
+        flavor: c07a0957-f45b-44dc-8346-e79481298ac1
+        network: 753940e0-c2a7-4c9d-992e-4d5bd71f85aa
+        security_groups: "remote_access,default"
+        key_name: key_pair_name_please_replace_before_running
+        remote_ssh_user: centos
+
+    create-file:
+      type: sodalite.local.CreateFile
+      requirements:
+        - host: os-workstation
+
+    file-test-passing:
+      type: sodalite.nodes.Tests.Text.File
+      properties:
+        file_location: /tmp/playing-opera/hello/hello.txt
+        comparable_string: "FooBar"
+      requirements:
+        - host: os-workstation
+
+    file-test-failing:
+      type: sodalite.nodes.Tests.Text.File
+      properties:
+        file_location: /tmp/playing-opera/hello/hello.txt
+        comparable_string: "BooBar"
+      requirements:
+        - host: os-workstation
+
+    docker-host:
+      type: sodalite.nodes.DockerHost
+      requirements:
+        - host: os-workstation
+
+    docker-registry-certificate:
+      type: sodalite.nodes.RegistryCertificate
+      properties:
+        registry_ip:         154.48.185.207
+        country_name:        "SI"
+        organization_name:   "XLAB"
+        email_address:       ""
+      requirements:
+        - host: os-workstation
+        - dependency: docker-host
+
+    docker-registry:
+      type: sodalite.nodes.DockerRegistry
+      properties:
+        docker_registry_url: "registry.hub.docker.com"
+        docker_user:  ""
+        docker_pass:  ""
+      requirements:
+        - host: os-workstation
+        - dependency: docker-host
+
+    docker-network:
+      type: sodalite.nodes.DockerNetwork
+      properties:
+        name: "knowgo_net"
+      requirements:
+        - host: os-workstation
+        - dependency: docker-host
+
+    http-echo-test:
+      type: sodalite.nodes.DockerizedComponent
+      properties:
+        docker_network_name:  { get_property: [ SELF, network, name ] }
+        alias: http-echo-test
+        image_name: hashicorp/http-echo
+        command: [-text="Though the conclusion will inevitably have much in common with the introduction, and some repetition is unavoidable, make sure students use different wording in their conclusion."]
+        ports:
+          - "5678:5678"
+      requirements:
+        - host: docker-host
+        - network: docker-network
+        - registry: docker-registry
+
+    uri-regex-passing:
+      type: sodalite.nodes.Tests.Text.URI
+      properties:
+        comparable_string: '.*some repetition is unavoidable.*'
+        url: 'http://127.0.0.1:5678'
+        regex: true
+      requirements:
+        - host: os-workstation
+
+    uri-regex-failing:
+      type: sodalite.nodes.Tests.Text.URI
+      properties:
+        comparable_string: "This student shouldn't pass by any means."
+        url: 'http://127.0.0.1:5678/'
+        regex: true
+      requirements:
+        - host: os-workstation
