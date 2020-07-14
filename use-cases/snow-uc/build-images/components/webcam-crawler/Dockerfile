@@ -3,9 +3,9 @@ FROM ubuntu
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Get Webcam Crawler
-# clone https://gitlab.com/wds-co/SnowWatch-SODALITE.git to build context before building
-COPY SnowWatch-SODALITE/WebCamCrawler/ SnowWatch-SODALITE/WebCamCrawler/
-COPY SnowWatch-SODALITE/config.json SnowWatch-SODALITE/config.json
+# clone https://gitlab.com/wds-co/SnowWatch-SODALITE.git and copy this file in SnowWatch-SODALITE dir
+COPY WebCamCrawler/ SnowWatch-SODALITE/WebCamCrawler/
+COPY config.json SnowWatch-SODALITE/config.json
 
 
 
