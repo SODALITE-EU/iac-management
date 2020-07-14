@@ -105,7 +105,7 @@ Executes the command and checks for the command execution duration then compares
 - comparator [string {eq, lt, gt, le, ge}]: lt (The comparator used to test the supposed command execution duration with)
 
 ### Openstack/remote test examples
-To test openstack functionality, you first need to copy your OS openrc file to the root of the project and name it `SODALITE-openrc-sh`. Now create a key pair/self-signed CA and copy it inside the modules/docker/artifacts/. The public and private key files must be named ca.crt and ca.key respectively. The computer that will run these tests also has to have the ssh key pair properly set up in order to be able to connect to the VM at all. You also may want to change the settings in the openstack_test.yaml, lines 35 to 41 to make the test work with your own key pair etc.
+To test OpenStack (OS) functionality, you first need to copy your OS's openrc file (so that the scripts can establish a remote connection to the OS api) to the root of the project and name it `SODALITE-openrc-sh`. Now create a key pair/self-signed CA and copy it inside the modules/docker/artifacts/. The public and private key files must be named ca.crt and ca.key respectively. The computer that will run these tests also has to have the ssh key pair properly set up in order to be able to connect to the VM at all. You also may want to change the settings in the openstack_test.yaml, lines 35 to 41 to make the test work with your own key pair etc.
 
 To launch the tests, use the redeploy_openstack_test.bash and type in your openrc/openstack password.
 
