@@ -3,9 +3,9 @@ FROM ubuntu
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Get Daily Median Aggregator
-# clone https://gitlab.com/wds-co/SnowWatch-SODALITE.git to build context before building
-COPY SnowWatch-SODALITE/DailyMedianAggregator/ SnowWatch-SODALITE/DailyMedianAggregator/
-COPY SnowWatch-SODALITE/config.json SnowWatch-SODALITE/config.json
+# clone https://gitlab.com/wds-co/SnowWatch-SODALITE.git and copy this file in SnowWatch-SODALITE dir
+COPY DailyMedianAggregator/ SnowWatch-SODALITE/DailyMedianAggregator/
+COPY config.json SnowWatch-SODALITE/config.json
 
 WORKDIR SnowWatch-SODALITE/DailyMedianAggregator/
 
