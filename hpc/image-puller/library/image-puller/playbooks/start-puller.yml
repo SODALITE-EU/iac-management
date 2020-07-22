@@ -1,0 +1,56 @@
+---
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: >
+        Create temporary inventory for remote_host, 
+        since opera requires internal envvars to access the target. 
+        Need more examples to access static nodes without specifying them in the inventory file
+      add_host:
+        name: "{{ remote_host_public_address }}"
+        groups: "{{ remote_host_public_address }}"
+        ansible_host: "{{ remote_host_public_address }}"
+        ansible_user: "{{ remote_host_username }}"
+        ansible_ssh_private_key_file: "{{ remote_host_keypath }}"
+        ansible_ssh_common_args: >
+          -o IdentitiesOnly=yes
+          -o BatchMode=yes
+          -o UserKnownHostsFile=/dev/null
+          -o StrictHostKeyChecking=no
+      when: remote_host_public_address != "localhost"
+
+
+- hosts: "{{ remote_host_public_address }}"
+  gather_facts: yes
+  environment:
+    PATH: "{{ ansible_env.PATH }}:/usr/sbin"
+  tasks:
+
+    - name: "Check image existence"
+      stat:
+        path: "{{ images_location }}/{{ output }}"
+      register: image_status
+
+    - name: "When private repository, download using puller"
+      block:
+        - name: "Download tar image"
+          shell: >
+            singularity run \
+              -B {{ certs_location }}:/certs \
+              -B {{ images_location }}:/images \
+              {{ puller_image }} {{ output }} {{ image }}
+        - name: "Convert tar to sif"
+          shell: >
+            singularity build \
+              {{ images_location }}/{{ output }} \
+              docker-archive://{{ images_location }}/{{ output }}.tar.gz
+
+      when: image_status.stat.exists == false and registry == 'private'
+
+    - name: "Otherwise, download normally"
+      shell: >
+        singularity pull \
+          --dir {{ images_location }} \
+          {{ output }} \
+          {{ registry }}://{{ image }}
+      when: image_status.stat.exists == false and registry != 'private'
