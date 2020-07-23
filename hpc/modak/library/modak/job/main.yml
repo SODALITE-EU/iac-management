@@ -50,6 +50,50 @@ node_types:
           capability: sodalite.capabilities.modak.Optimization
           relationship: tosca.relationships.DependsOn
           occurrences: [ 0, 1 ]
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        operations:
+          create:
+            inputs:
+              # job_options properties
+              job_name: { default: { get_property: [SELF, job_options, job_name] } }
+              account: { default: { get_property: [SELF, job_options, account] } }
+              queue: { default: { get_property: [SELF, job_options, queue] } }
+              wall_time_limit: { default: { get_property: [SELF, job_options, wall_time_limit] } }
+              node_count: { default: { get_property: [SELF, job_options, node_count] } }
+              core_count: { default: { get_property: [SELF, job_options, core_count] } }
+              process_count_per_node: { default: { get_property: [SELF, job_options, process_count_per_node] } }
+              core_count_per_process: { default: { get_property: [SELF, job_options, core_count_per_process] } }
+              memory_limit: { default: { get_property: [SELF, job_options, memory_limit] } }
+              minimum_memory_per_processor: { default: { get_property: [SELF, job_options, minimum_memory_per_processor] } }
+              request_gpus: { default: { get_property: [SELF, job_options, request_gpus] } }
+              request_specific_nodes: { default: { get_property: [SELF, job_options, request_specific_nodes] } }
+              job_array: { default: { get_property: [SELF, job_options, job_array] } }
+              standard_output_file: { default: { get_property: [SELF, job_options, standard_output_file] } }
+              standard_error_file: { default: { get_property: [SELF, job_options, standard_error_file] } }
+              combine_stdout_stderr: { default: { get_property: [SELF, job_options, combine_stdout_stderr] } }
+              architecture_constraint: { default: { get_property: [SELF, job_options, architecture_constraint] } }
+              copy_environment: { default: { get_property: [SELF, job_options, copy_environment] } }
+              copy_environment_variable: { default: { get_property: [SELF, job_options, copy_environment_variable] } }
+              job_dependency: { default: { get_property: [SELF, job_options, job_dependency] } }
+              request_event_notification: { default: { get_property: [SELF, job_options, request_event_notification] } }
+              email_address: { default: { get_property: [SELF, job_options, email_address] } }
+              defer_job: { default: { get_property: [SELF, job_options, defer_job] } }
+              node_exclusive: { default: { get_property: [SELF, job_options, node_exclusive] } }
+              # application properties
+              app_tag: { default: { get_property: [SELF, application, app_tag] } }
+              container_runtime: { default: { get_property: [SELF, application, container_runtime] } }
+              app_type: { default: { get_property: [SELF, application, app_type] } }
+              executable: { default: { get_property: [SELF, application, executable] } }
+              arguments: { default: { get_property: [SELF, application, arguments] } }
+              mpi_ranks: { default: { get_property: [SELF, application, mpi_ranks] } }
+              threads: { default: { get_property: [SELF, application, threads] } }
+              # target properties
+              name: { default: { get_property: [SELF, target, name] } }
+              queue_type: { default: { get_property: [SELF, target, queue_type] } }
+            implementation: 
+              primary: playbooks/create-modak-job.yml
 
 
   sodalite.nodes.modak.job_options:
@@ -165,6 +209,25 @@ node_types:
           capability: sodalite.capabilities.modak.ApplicationBuild
           relationship: tosca.relationships.DependsOn
           occurrences: [ 0, UNBOUNDED ]
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        operations:
+          create:
+            inputs:
+              # application properties
+              app_tag: { default: { get_property: [SELF, app_tag] } }
+              container_runtime: { default: { get_property: [SELF, container_runtime] } }
+              app_type: { default: { get_property: [SELF, app_type] } }
+              executable: { default: { get_property: [SELF, executable] } }
+              arguments: { default: { get_property: [SELF, arguments] } }
+              mpi_ranks: { default: { get_property: [SELF, mpi_ranks] } }
+              threads: { default: { get_property: [SELF, threads] } }
+              # build properties
+              source: { default: { get_property: [SELF, build, source] } }
+              build_command: { default: { get_property: [SELF, build, build_command] } }
+            implementation: 
+              primary: playbooks/create-application-build.yml
 
   sodalite.nodes.modak.target:
     derived_from: tosca.nodes.Root
