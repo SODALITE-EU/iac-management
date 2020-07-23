@@ -52,7 +52,7 @@
           state: "deleted"
 
     - name: Check the exit status
-      shell: qstat -f {{ job_id }} | grep 'exit_status' | grep -o '.$'
+      shell: qstat -f {{ job_id }} | grep 'exit_status' | egrep -o '[^ ]+$'
       register: job_exit_status
 
     # Do some failure mitigation actions here

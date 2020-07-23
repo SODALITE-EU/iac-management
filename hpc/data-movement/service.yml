@@ -1,0 +1,118 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - library/data/mover/main.yml
+
+node_types:
+  sodalite.nodes.remote: 
+    description: >
+      Some remote node
+    derived_from: tosca.nodes.Compute
+    attributes:
+      username:
+        type: string
+      ssh-key:
+        type: string
+
+topology_template:
+
+  inputs:
+    frontend-address:
+      type: string
+    user:
+      type: string
+    key-location:
+      type: string
+    data-location-client:
+      type: string
+    data-location-server:
+      type: string
+
+
+  node_templates:
+
+    hpc-frontend:
+      type: sodalite.nodes.remote
+      attributes:
+        public_address: { get_input: frontend-address }
+        username: { get_input: user }
+        ssh-key: { get_input: key-location }
+
+    gridftp-client-host:
+      type: sodalite.nodes.remote
+      attributes:
+        public_address: localhost
+        username: { get_input: user }
+        ssh-key: { get_input: key-location }
+
+    client-data:
+      type: sodalite.data.textFile
+      properties:
+        location: { get_input: data-location-client }
+        content: "Initial Client Data"
+      requirements:
+        - host: gridftp-client-host
+
+    sample-url-data-transfer:
+      type: sodalite.data.mover.url
+      properties:
+        src: https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-repo-rhel7-10.1.105-1.x86_64.rpm
+        dst: ~
+      requirements:
+        - host: hpc-frontend
+
+    gridftp-data-ping:
+      type: sodalite.data.mover.gridftp
+      properties:
+        name: Transfer client data to server
+        src_protocol: file
+        src_address: localhost
+        src_port: ~
+        src_path: { get_input: data-location-client }
+        dst_protocol: gsiftp
+        dst_address: { get_input: frontend-address }
+        dst_port: ~
+        dst_path: { get_input: data-location-server }
+      # attributes:
+        # src:
+        #   protocol: file
+        #   address: localhost
+        #   path: { get_input: data-location-client }
+        # dst:
+        #   protocol: gsiftp
+        #   address: { get_input: frontend-address }
+        #   path: { get_input: data-location-server }
+      requirements:
+        - client: gridftp-client-host
+
+    server-data:
+      type: sodalite.data.textFile
+      properties:
+        location: { get_input: data-location-server }
+        content: "Server Data: Modifying Client Data"
+      requirements:
+        - host: hpc-frontend
+
+    gridftp-data-pong:
+      type: sodalite.data.mover.gridftp
+      properties:
+        name: Transfer server data to client
+        src_protocol: gsiftp
+        src_address: { get_input: frontend-address }
+        src_port: ~
+        src_path: { get_input: data-location-server }
+        dst_protocol: file
+        dst_address: localhost
+        dst_port: ~
+        dst_path: { get_input: data-location-client }
+      # attributes:
+        # src:
+        #   protocol: gsiftp
+        #   address: { get_input: frontend-address }
+        #   path: { get_input: data-location-server }
+        # dst:
+        #   protocol: file
+        #   address: localhost
+        #   path: { get_input: data-location-client }
+      requirements:
+        - client: gridftp-client-host
