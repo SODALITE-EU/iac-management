@@ -1,0 +1,117 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - library/modak/job/main.yml
+
+topology_template:
+
+  inputs:
+    frontend-address:
+      type: string
+    user:
+      type: string
+    key-location:
+      type: string
+    email:
+      type: string
+
+
+  node_templates:
+
+
+# Common target: HLRS testbed
+
+    hlrs-testbed-target:
+      type: sodalite.nodes.modak.target
+      properties:
+        name: "hlrs_testbed"
+        queue_type: "torque"
+
+
+##############
+#---SOLVER JOB
+##############
+
+    solver-job-options:
+      type: sodalite.nodes.modak.job_options
+      properties:
+        job_name: "solver"
+        wall_time_limit: "1:00:00"
+        node_count: 2
+        core_count: 40
+        process_count_per_node: 40
+        standard_output_file: "file.out"
+        standard_error_file: "file.err"
+        combine_stdout_stderr: true
+        request_event_notification: "abe"
+        email_address: { get_input: email }
+
+    solver-application-build:
+      type: sodalite.nodes.modak.application.build
+      properties:
+        src: "https://www.code-aster.org/FICHIERS/aster-full-src-14.4.0-1.noarch.tar.gz"
+        build_command: "python3 setup.py install\n"
+
+    solver-application:
+      type: sodalite.nodes.modak.application
+      properties:
+        app_tag: "solver_clinicalUC"
+        container_runtime: "ethcscs/mpich:ub1804_cuda101_mpi314_gnugprof"
+        app_type: "mpi"
+        executable: "${ASTER_ROOT}/14.4/bin/aster "
+        arguments: "${ASTER_ROOT}/14.4/lib/aster/Execution/E_SUPERV.py \\\n-commandes fort.1 --num_job=1432 --mode=interactif \\\n--rep_outils=${ASTER_ROOT}/outils \\\n--rep_mat=${ASTER_ROOT}/14.4/share/aster/materiau \\\n--rep_dex=${ASTER_ROOT}/14.4/share/aster/datg \\\n--numthreads=1 --suivi_batch --memjeveux=8192.0 --tpmax=3600.0"
+        mpi_ranks: 40
+        threads: 1
+      dependencies:
+        - build: solver-application-build
+
+    solver-job:
+      type: sodalite.nodes.modak.job
+      properties:
+        artifact_name: "solver-job-timestamp.sh"
+        artifact_url: "https://www.dropbox.com/somewhere_in_dropbox/solver-job-timestamp.sh"
+      dependencies:
+        - job_options: solver-job-options
+        - application: solver-application
+        - target: hlrs-testbed-target
+
+
+
+###########################
+#---TensorFlow-GPU SNOW JOB
+###########################
+
+    tf-snow-job-options:
+      type: sodalite.nodes.modak.job_options
+      properties:
+        job_name: "skyline-extraction-training"
+        wall_time_limit: "12:00:00 "
+        node_count: 1
+        core_count: 40
+        request_gpus: 1
+        request_specific_nodes: "ssd"
+        standard_output_file: "skyline-extraction-training.out"
+        standard_error_file: "skyline-extraction-training.err"
+        combine_stdout_stderr: true
+        copy_environment: true
+        request_event_notification: "abe"
+        email_address: { get_input: email }
+
+    tf-snow-application:
+      type: sodalite.nodes.modak.application
+      properties:
+        app_tag: "skyline-extraction-training"
+        container_runtime: "tensorflow/tensorflow:2.1.0-gpu-py3"
+        app_type: "python"
+        executable: "python3 resnet/resnet_imagenet_main.py"
+        arguments: "--data_dir=/mnt/nfs/home/karthee/AI/data/tf_records/train/ -batch_size=96 --train_epochs=3 --train_steps=10 --use_synthetic_data=false"
+
+    tf-snow-job:
+      type: sodalite.nodes.modak.job
+      properties:
+        artifact_name: "tf-snow-job-timestamp.sh"
+        artifact_url: "https://www.dropbox.com/somewhere_in_dropbox/tf-snow-job-timestamp.sh"
+      dependencies:
+        - job_options: tf-snow-job-options
+        - application: tf-snow-application
+        - target: hlrs-testbed-target

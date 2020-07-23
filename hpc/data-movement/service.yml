@@ -3,17 +3,6 @@ tosca_definitions_version: tosca_simple_yaml_1_3
 imports:
   - library/data/mover/main.yml
 
-node_types:
-  sodalite.nodes.remote: 
-    description: >
-      Some remote node
-    derived_from: tosca.nodes.Compute
-    attributes:
-      username:
-        type: string
-      ssh-key:
-        type: string
-
 topology_template:
 
   inputs:
@@ -32,14 +21,14 @@ topology_template:
   node_templates:
 
     hpc-frontend:
-      type: sodalite.nodes.remote
+      type: sodalite.nodes.remote.client
       attributes:
         public_address: { get_input: frontend-address }
         username: { get_input: user }
         ssh-key: { get_input: key-location }
 
     gridftp-client-host:
-      type: sodalite.nodes.remote
+      type: sodalite.nodes.remote.client
       attributes:
         public_address: localhost
         username: { get_input: user }

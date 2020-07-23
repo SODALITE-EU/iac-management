@@ -21,7 +21,7 @@
 - hosts: wm
   gather_facts: yes
   vars:
-    job_workspace_path: '{{ ( job_workspace != None ) | ternary(job_workspace, ansible_env.HOME) }}'
+    job_workspace_path: '{{ ( ( job_workspace != None ) | ternary(job_workspace, ansible_env.HOME) ) | replace("~", ansible_env.HOME) }}'
   tasks:
     - name: "Validate workspace"
       stat:

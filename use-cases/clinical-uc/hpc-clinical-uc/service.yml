@@ -1,171 +1,223 @@
-tosca_definitions_version: tosca_simple_yaml_1_0
+tosca_definitions_version: tosca_simple_yaml_1_3
 
-node_types:
-
-  my.nodes.hpc.wm.torque: 
-    description: >
-      torque wm, here we can define properties/attributes applicable for torque WM
-    derived_from: tosca.nodes.Compute
-    attributes:
-      username:
-        type: string
-      ssh-key:
-        type: string
-    capabilities:
-      host:
-        type: tosca.capabilities.Compute
-        valid_source_types: [my.nodes.hpc.job.torque]
-
-  my.nodes.hpc.job.torque: 
-    description: >
-      torque job type, here we can define properties/attributes applicable for torque WM, 
-      e.g. execution environment, etc.
-    derived_from: tosca.nodes.SoftwareComponent
-    requirements:
-      - host:
-          node: my.nodes.hpc.wm.torque
-          capability: tosca.capabilities.Compute
-          relationship: my.relationships.jobHostedOn
-    properties:
-      name:
-        type: string
-        description: Name of the job
-      script_template:
-        type: string
-        description: >
-          Job script template with j2 extension, 
-          such that Ansible can process it with the template module
-      workspace:
-        type: string
-        description: Location of the sources and the job script
-      email:
-        type: string
-        description: >
-          Job status will be notified to this email
-      nb_nodes:
-        type: integer
-        description: >
-          Number of requested nodes
-      ppn:
-        type: integer
-        description: >
-          Number of processes per node
-      gpus:
-        type: integer
-        description: >
-          Number of requested GPUs
-      walltime:
-        type: string
-        description: >
-          Expected time of execution
-          FORMAT: HH:MM:SS
-      monitor_period:
-        type: integer
-        default: 10
-      monitor_retries_headroom:
-        type: integer
-        default: 2
-    attributes:
-      job_id:
-        type: string
-    interfaces:
-      Standard:
-        type: tosca.interfaces.node.lifecycle.Standard
-        inputs:
-          # attribute "public_address" is internal to get a host, but we need to fetch it in playbooks
-          wm_public_address: { default: { get_attribute: [SELF, host, public_address] } }
-          wm_username: { default: { get_attribute: [SELF, host, username] } }
-          wm_keypath: { default: { get_attribute: [SELF, host, ssh-key] } }
-          # Conditionals or default values will help to get rid of properties that are not used in playbooks
-          job_name: { default: { get_property: [SELF, name] } }
-          job_script_template: { default: { get_property: [SELF, script_template] } }
-          job_workspace: { default: { get_property: [SELF, workspace] } }
-          job_email: { default: { get_property: [SELF, email] } }
-          job_nb_nodes: { default: { get_property: [SELF, nb_nodes] } }
-          job_ppn: { default: { get_property: [SELF, ppn] } }
-          job_gpus: { default: { get_property: [SELF, gpus] } }
-          job_walltime: { default: { get_property: [SELF, walltime] } }
-          job_monitor_period: { default: { get_property: [SELF, monitor_period] } }
-          job_monitor_retries_headroom: { default: { get_property: [SELF, monitor_retries_headroom] } }
-        create:
-          implementation: playbooks/torque-job/create.yml
-        configure:
-          implementation: playbooks/torque-job/configure.yml
-        start:
-          implementation: playbooks/torque-job/start.yml
-
-relationship_types:
-
-  # Relationship's Configure interfaces are not implemented in the current commit (06031d3)
-  my.relationships.jobHostedOn:
-    derived_from: tosca.relationships.HostedOn
-    interfaces:
-      Configure:
-        add_source:
-          implementation:
-            primary: playbooks/torque-job/test.yml
+imports:
+  - hpc/hpc-discovery/library/torque/main.yml
+  - hpc/image-puller/library/image-puller/main.yml
+  - hpc/data-movement/library/data/mover/main.yml
 
 topology_template:
+
+  inputs:
+    frontend-address:
+      type: string
+    user:
+      type: string
+    key-location:
+      type: string
+    email:
+      type: string
+    density-mapping-script:
+      type: string
+    probabilistic-mapping-script:
+      type: string
+    boundary-condition-script:
+      type: string
+    solver-script:
+      type: string
+    mapper-data-input:
+      type: string
+    mapper-data-output-struct:
+      type: string
+    solver-data:
+      type: string
 
   node_templates:
 
     hpc-wm-torque:
-      type: my.nodes.hpc.wm.torque
+      type: sodalite.nodes.hpc.wm.torque
       attributes:
-        public_address: sodalite-fe.hlrs.de
-        username: kamil
-        ssh-key: ~/keys/kamil-sodalite-fe
+        public_address: { get_input: frontend-address }
+        username: { get_input: user }
+        ssh-key: { get_input: key-location }
 
-    # Properties are forced, use defaults next time
-    density-mapping:
-      type: my.nodes.hpc.job.torque
+### image pulling
+
+    cadt-image:
+      type: sodalite.image_puller.singularity
       properties:
-        name: uc-density-mapping
-        script_template: ~/opera/hpc-clinical-uc/artifacts/density-mapping-job.pbs.j2
-        workspace: /mnt/nfs/home/kamil/
-        email: tokmakov@hlrs.de
-        nb_nodes: 1
-        ppn: 20
-        gpus: 0
-        walltime: 00:30:00
-        monitor_period: 10
-        monitor_retries_headroom: 2
+        output: "cadt.sif"
+        image: "cadt:1.0.0"
+        registry: "private"
+        certs_location: "certs"
+        images_location: "images"
       requirements:
         - host: hpc-wm-torque
 
-    # Properties are forced, use defaults next time
-    probabilistic-mapping:
-      type: my.nodes.hpc.job.torque
+    moduli-image:
+      type: sodalite.image_puller.singularity
       properties:
-        name: uc-probabilistic-mapping
-        script_template: ~/opera/hpc-clinical-uc/artifacts/probabilistic-mapping-job.pbs.j2
-        workspace: /mnt/nfs/home/kamil/
-        email: tokmakov@hlrs.de
-        nb_nodes: 1
-        ppn: 10
-        gpus: 0
-        walltime: 00:30:00
-        monitor_period: 10
-        monitor_retries_headroom: 2
+        output: "moduli.sif"
+        image: "moduli:1.0.0"
+        registry: "private"
+        certs_location: "certs"
+        images_location: "images"
       requirements:
         - host: hpc-wm-torque
-        - dependency: density-mapping
 
-    # Properties are forced, use defaults next time
-    solver:
-      type: my.nodes.hpc.job.torque
+    code-aster-image:
+      type: sodalite.image_puller.singularity
       properties:
-        name: uc-solver
-        script_template: ~/opera/hpc-clinical-uc/artifacts/solver-job.pbs.j2
-        workspace: /mnt/nfs/home/kamil/
-        email: tokmakov@hlrs.de
-        nb_nodes: 1
-        ppn: 10
-        gpus: 0
-        walltime: 00:30:00
-        monitor_period: 10
-        monitor_retries_headroom: 2
+        output: "code-aster.sif"
+        image: "quay.io/tianyikillua/code_aster"
+        registry: "docker"
+        images_location: "images"
       requirements:
         - host: hpc-wm-torque
-        - dependency: probabilistic-mapping
-        
+
+### data staging
+
+    gridftp-client-host:
+      type: sodalite.nodes.remote.client
+      attributes:
+        public_address: localhost
+        username: { get_input: user }
+        ssh-key: { get_input: key-location }
+
+    input-data-mapper-transfer:
+      type: sodalite.data.mover.gridftp
+      properties:
+        name: Transfer client data to server
+        src_protocol: file
+        src_address: localhost
+        src_port: ~
+        src_path: { get_input: mapper-data-input }
+        dst_protocol: gsiftp
+        dst_address: { get_input: frontend-address }
+        dst_port: ~
+        dst_path: ~/workflow-container/input/
+      requirements:
+        - client: gridftp-client-host
+
+    output-struct-data-mapper-transfer:
+      type: sodalite.data.mover.gridftp
+      properties:
+        name: Transfer client data to server
+        src_protocol: file
+        src_address: localhost
+        src_port: ~
+        src_path: { get_input: mapper-data-output-struct }
+        dst_protocol: gsiftp
+        dst_address: { get_input: frontend-address }
+        dst_port: ~
+        dst_path: ~/workflow-container/output/
+      requirements:
+        - client: gridftp-client-host
+
+### job configs
+
+    density-mapping-job-config:
+      type: sodalite.nodes.hpc.job.torque.configuration
+      properties:
+        name: density-mapping
+        script: { get_input: density-mapping-script }
+        workspace: ~/workflow-container
+        ppn: 4
+        walltime: 00:30:00
+        email: { get_input: email }
+        enable_audit: true
+      requirements:
+        - host: hpc-wm-torque
+
+    probabilistic-mapping-job-config:
+      type: sodalite.nodes.hpc.job.torque.configuration
+      properties:
+        name: probabilistic-mapping
+        script: { get_input: probabilistic-mapping-script }
+        workspace: ~/workflow-container
+        ppn: 4
+        walltime: 00:30:00
+        email: { get_input: email }
+        enable_audit: true
+      requirements:
+        - host: hpc-wm-torque
+
+    boundary-condition-job-config:
+      type: sodalite.nodes.hpc.job.torque.configuration
+      properties:
+        name: boundary-condition
+        script: { get_input: boundary-condition-script }
+        workspace: ~/workflow-container
+        ppn: 4
+        walltime: 00:30:00
+        email: { get_input: email }
+        enable_audit: true
+      requirements:
+        - host: hpc-wm-torque
+
+    # solver-job-config:
+    #   type: sodalite.nodes.hpc.job.torque.configuration
+    #   properties:
+    #     name: solver
+    #     script: { get_input: solver-script }
+    #     workspace: ~
+    #     ppn: 4
+    #     walltime: 00:30:00
+    #     email: { get_input: email }
+    #     enable_audit: true
+    #   requirements:
+    #     - host: hpc-wm-torque
+
+### job workflow
+
+    density-mapping-job:
+      type: sodalite.nodes.hpc.job.torque
+      requirements:
+        - host: hpc-wm-torque
+        - configured_job: density-mapping-job-config
+
+    probabilistic-mapping-job:
+      type: sodalite.nodes.hpc.job.torque
+      requirements:
+        - host: hpc-wm-torque
+        - configured_job: probabilistic-mapping-job-config
+        - dependency: density-mapping-job-result
+
+    boundary-condition-job:
+      type: sodalite.nodes.hpc.job.torque
+      requirements:
+        - host: hpc-wm-torque
+        - configured_job: boundary-condition-job-config
+        - dependency: probabilistic-mapping-job-result
+
+    # solver-job:
+    #   type: sodalite.nodes.hpc.job.torque
+    #   requirements:
+    #     - host: hpc-wm-torque
+    #     - configured_job: solver-job-config
+    #     - dependency: boundary-condition-job-result
+
+### job result
+
+    density-mapping-job-result:
+      type: sodalite.nodes.hpc.job.torque.result
+      requirements:
+        - host: hpc-wm-torque
+        - job: density-mapping-job
+
+    probabilistic-mapping-job-result:
+      type: sodalite.nodes.hpc.job.torque.result
+      requirements:
+        - host: hpc-wm-torque
+        - job: probabilistic-mapping-job
+
+    boundary-condition-job-result:
+      type: sodalite.nodes.hpc.job.torque.result
+      requirements:
+        - host: hpc-wm-torque
+        - job: boundary-condition-job
+
+    # solver-job-result:
+    #   type: sodalite.nodes.hpc.job.torque.result
+    #   requirements:
+    #     - host: hpc-wm-torque
+    #     - job: solver-job

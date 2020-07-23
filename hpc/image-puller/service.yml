@@ -1,0 +1,66 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - library/image-puller/main.yml
+
+node_types:
+  sodalite.nodes.remote: 
+    description: >
+      Some remote node
+    derived_from: tosca.nodes.Compute
+    attributes:
+      username:
+        type: string
+      ssh-key:
+        type: string
+
+topology_template:
+
+  inputs:
+    frontend-address:
+      type: string
+    user:
+      type: string
+    key-location:
+      type: string
+
+
+  node_templates:
+
+    hpc-frontend:
+      type: sodalite.nodes.remote
+      attributes:
+        public_address: { get_input: frontend-address }
+        username: { get_input: user }
+        ssh-key: { get_input: key-location }
+
+    private-docker-registry-puller:
+      type: sodalite.image_puller.singularity
+      properties:
+        output: "mpich.sif"
+        image: "mpich:3.3.1"
+        registry: "private"
+        certs_location: "certs"
+        images_location: "images"
+      requirements:
+        - host: hpc-frontend
+
+    public-docker-registry-puller:
+      type: sodalite.image_puller.singularity
+      properties:
+        output: "alpine-from-docker.sif"
+        image: "alpine:latest"
+        registry: "docker"
+        images_location: "images"
+      requirements:
+        - host: hpc-frontend
+
+    public-singularity-registry-puller:
+      type: sodalite.image_puller.singularity
+      properties:
+        output: "alpine-from-singularity.sif"
+        image: "alpine:latest"
+        registry: "library"
+        images_location: "images"
+      requirements:
+        - host: hpc-frontend

@@ -26,7 +26,7 @@
     - name: "Transfer data"
       shell: >
         globus-url-copy
-        -vb 
+        -vb -r -cd
         {% if parallel_streams is defined and parallel_streams > 1 %} -p {{ parallel_streams }}{% endif %} 
-        {{ src_protocol }}://{{ src_address }}{% if src_port is defined and src_port != None %}:{{ src_port }}{% endif %}/{{ src_path }}
-        {{ dst_protocol }}://{{ dst_address }}{% if dst_port is defined and dst_port != None %}:{{ dst_port }}{% endif %}/{{ dst_path }}
+        {{ src_protocol }}://{{ src_address if src_address != "localhost" }}{% if src_port is defined and src_port != None %}:{{ src_port }}{% endif %}/{{ src_path }}
+        {{ dst_protocol }}://{{ dst_address if dst_address != "localhost" }}{% if dst_port is defined and dst_port != None %}:{{ dst_port }}{% endif %}/{{ dst_path }}
