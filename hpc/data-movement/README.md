@@ -1,4 +1,3 @@
-# HPC job test with discovery plugin output
+# Simple data movement from preinstalled client to preinstalled server and vice versa
 
-It utilizes output_hpc.yaml TOSCA file - an automatically generated file by HPC discovery service
-In order to run this service one needs to specify WM address, username, email and path to SSH key file in inputs.yaml
+In order to run this service one needs to specify frontend address, username, path to SSH key file and data location on client and server in inputs.yaml

@@ -1,1 +1,0 @@
-sodalite-fe.hlrs.de ansible_user=kamil ansible_ssh_private_key_file="~/keys/kamil-sodalite-fe" 
