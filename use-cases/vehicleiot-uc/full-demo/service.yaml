@@ -95,7 +95,7 @@ topology_template:
         network:          { get_input: openstack-network-name } 
         security_groups:  { get_input: security-groups } 
         flavor:           { get_input: flavor-name }
-
+        username: centos
     docker-host:
       type: sodalite.nodes.DockerHost
       requirements:

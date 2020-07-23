@@ -26,6 +26,9 @@ node_types:
       key_name:  
         description: OpenStack SSH key name that should be placed on the VM 
         type: string 
+      username:  
+        description: Username for SSH connection 
+        type: string         
     attributes:  
       id:  
         description: OpenStack id of the VM 
@@ -53,6 +56,7 @@ node_types:
               image:                    { default: { get_property: [ SELF, image    ] } } 
               security_groups:          { default: { get_property: [ SELF, security_groups ] } } 
               vm_name:                  { default: { get_property: [ SELF, name ] } } 
+              ansible_user:             { default: { get_property: [ SELF, username ] } } 
             implementation: playbooks/vm_create.yml 
           delete:  
             inputs:  
