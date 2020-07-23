@@ -18,6 +18,16 @@ data_types:
 
 node_types:
 
+  sodalite.nodes.remote.client: 
+    description: >
+      Some remote node
+    derived_from: tosca.nodes.Compute
+    attributes:
+      username:
+        type: string
+      ssh-key:
+        type: string
+
   sodalite.data.textFile: # artifacts to be supported
     derived_from: tosca.nodes.Root
     properties:
