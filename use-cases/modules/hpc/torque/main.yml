@@ -114,8 +114,6 @@ node_types:
             implementation: 
               primary: torque-job/playbooks/create.yml
               dependencies: 
-                - ../../artifacts/job.sh
-                -  ../../artifacts/failed.job.sh
                 - torque-job/templates/audit.sh.j2
                 - torque-job/templates/job.pbs.j2
     capabilities:
@@ -156,8 +154,6 @@ node_types:
             implementation: 
               primary: torque-job/playbooks/create.yml
               dependencies: 
-                - ../../artifacts/job.sh
-                -  ../../artifacts/failed.job.sh
                 - torque-job/templates/audit.sh.j2
                 - torque-job/templates/job.pbs.j2
      
