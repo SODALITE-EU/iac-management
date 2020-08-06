@@ -1,6 +1,38 @@
 ---
 - hosts: all
   gather_facts: no
+  vars:
+    request:
+      job:
+        job_options: "{{ job_options }}"
+        application: "{{ application }}"
+        target: "{{ target }}"
+        optimisation: "{{ optimisation }}"
   tasks:
-    - debug:
-        msg: "{{ vars | to_nice_json }}"
+
+    # just for debugging purposes
+    - copy: content="{{ request | to_nice_json }}" dest=/tmp/ansible-request-{{ request['job']['application']['app_tag'] }}.json
+
+    - name: Send request to MODAK
+      uri:
+        url: "{{ modak_endpoint }}"
+        method: POST
+        body_format: json
+        body: "{{ request }}"
+      register: response
+
+    # just for debugging purposes
+    - copy: content="{{ response.json | to_nice_json }}" dest=/tmp/ansible-response-{{ request['job']['application']['app_tag'] }}.json
+
+    - set_fact:
+        artifact_url: "{{ response.json.job.job_script }}"
+
+    - name: Set artifact url
+      set_stats:
+        data:
+          artifact_url: "{{ artifact_url }}"
+
+    - name: Save job
+      get_url:
+        url: "{{ artifact_url }}"
+        dest: "{{ job_script }}"
