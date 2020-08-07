@@ -166,7 +166,7 @@ data_types:
         type: string
         constraints:
           - valid_values: [ "tensorflow", "pytorch", "keras", "cntk", "mxnet" ]
-      type:
+      config_type: # modak uses "type" name, but it is reserved name in TOSCA/DSL that might cause errors in parsing. Change to "type" in implementation
         type: string
         constraints:
           - valid_values: [ "image_classification", "object_detection", "translation", "recommendation", "reinforncement_learning" ]

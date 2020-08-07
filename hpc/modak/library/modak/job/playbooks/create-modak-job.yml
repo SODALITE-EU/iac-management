@@ -1,14 +1,23 @@
 ---
 - hosts: all
   gather_facts: no
-  vars:
-    request:
-      job:
-        job_options: "{{ job_options }}"
-        application: "{{ application }}"
-        target: "{{ target }}"
-        optimisation: "{{ optimisation }}"
   tasks:
+
+    - name: "Create optimization.ai_training.config.type variable"
+      set_fact:
+        optimisation_updated_params: "{{ optimisation | combine( { 'app_type-ai_training': { 'config': { 'type' : ai_config_type } } } , recursive=True) }}"
+      vars:
+        ai_config_type: "{{ optimisation['app_type-ai_training']['config']['config_type'] }}"
+      when: optimisation['app_type-ai_training']['config']['config_type'] is defined
+
+    - name: Create request data
+      set_fact:
+        request:
+          job:
+            job_options: "{{ job_options }}"
+            application: "{{ application }}"
+            target: "{{ target }}"
+            optimisation: "{{ optimisation_updated_params if optimisation_updated_params is defined else optimisation }}"
 
     # just for debugging purposes
     - copy: content="{{ request | to_nice_json }}" dest=/tmp/ansible-request-{{ request['job']['application']['app_tag'] }}.json
