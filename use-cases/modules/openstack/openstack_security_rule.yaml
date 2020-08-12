@@ -21,6 +21,9 @@ data_types:
         default: 0.0.0.0/0 
         required: True 
         type: string 
+      direction:  
+        default: "ingress"
+        type: string 
 
 node_types:        
 
