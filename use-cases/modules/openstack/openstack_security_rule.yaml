@@ -24,6 +24,8 @@ data_types:
       direction:  
         default: "ingress"
         type: string 
+        constraints:  
+          - valid_values: ['ingress', 'egress'] 
 
 node_types:        
 
