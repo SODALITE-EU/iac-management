@@ -1,4 +1,8 @@
 ---
+- name: Refresh token and update env
+  import_playbook: egi_refresh_token.yml
+  when: env.checkin_env is defined
+
 - hosts: all
   gather_facts: no
 
@@ -7,3 +11,4 @@
       os_server:
         state: absent
         name: "{{ id }}"
+      environment: "{{ os_env if os_env is defined }}"

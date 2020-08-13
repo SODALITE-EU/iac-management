@@ -2,6 +2,7 @@ tosca_definitions_version: tosca_simple_yaml_1_3
 
 imports:
   - openstack_security_rule.yaml
+  - openstack_env.yaml
 
 node_types:
 
@@ -28,7 +29,29 @@ node_types:
         type: string 
       username:  
         description: Username for SSH connection 
-        type: string         
+        type: string   
+      include_exporter:
+        description: Flag to include exporter
+        type: boolean
+        default: true
+        required: false   
+      timeout:
+        description: Timeout to instantiate the VM
+        type: integer
+        default: 600
+        required: false 
+      floating_ip_pools:
+        description: Name of floating IP pool from which to choose a floating IP
+        type: string
+        default: "provider"
+        required: false 
+      env:
+        description: Optional OpenStack environment
+        type: map
+        entry_schema:
+          type: sodalite.datatypes.OpenStack.env
+        required: false
+        default: null
     attributes:  
       id:  
         description: OpenStack id of the VM 
@@ -57,8 +80,19 @@ node_types:
               security_groups:          { default: { get_property: [ SELF, security_groups ] } } 
               vm_name:                  { default: { get_property: [ SELF, name ] } } 
               ansible_user:             { default: { get_property: [ SELF, username ] } } 
-            implementation: playbooks/vm_create.yml 
+              include_exporter:         { default: { get_property: [ SELF, include_exporter ] } } 
+              timeout:                  { default: { get_property: [ SELF, timeout ] } } 
+              floating_ip_pools:        { default: { get_property: [ SELF, floating_ip_pools ] } } 
+              env:                      { default: { get_property: [ SELF, env ] } } 
+            implementation: 
+              primary: playbooks/vm_create.yml 
+              dependencies:
+                - playbooks/egi_refresh_token.yml
           delete:  
             inputs:  
               id:                       { default: { get_attribute: [ SELF, id ] } } 
-            implementation: playbooks/vm_delete.yml 
+              env:                      { default: { get_property: [ SELF, env ] } }
+            implementation: 
+              primary: playbooks/vm_delete.yml 
+              dependencies:
+                - playbooks/egi_refresh_token.yml

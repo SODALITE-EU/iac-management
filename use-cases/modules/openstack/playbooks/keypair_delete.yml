@@ -7,10 +7,9 @@
   gather_facts: no
 
   tasks:
-    - name: Delete security group
-      os_security_group:  
-        name: "{{ group_name }}"
+    - name: Delete keypair
+      os_keypair:  
+        name: "{{ name }}"
         state: absent
       ignore_errors: True
       environment: "{{ os_env if os_env is defined }}"
-

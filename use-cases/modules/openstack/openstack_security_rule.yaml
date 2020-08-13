@@ -1,5 +1,8 @@
 tosca_definitions_version: tosca_simple_yaml_1_3 
 
+imports:
+  - openstack_env.yaml
+
 data_types: 
 
   sodalite.datatypes.OpenStack.SecurityRule:  
@@ -47,18 +50,33 @@ node_types:
         description: Description of the security group in openstack. 
         required: True 
         type: string 
+      env:
+        description: Optional OpenStack environment
+        type: map
+        entry_schema:
+          type: sodalite.datatypes.OpenStack.env
+        required: false
+        default: null
     interfaces:  
       Standard:  
         type: tosca.interfaces.node.lifecycle.Standard   
         operations:
           create:  
-            implementation: playbooks/security_rule_create.yml 
+            implementation: 
+              primary: playbooks/security_rule_create.yml 
+              dependencies:
+                - playbooks/egi_refresh_token.yml
             inputs:  
               ports:                  { default: { get_property: [ SELF, ports  ] } } 
               group_name:             { default: { get_property: [ SELF, group_name         ] } } 
               group_description:      { default: { get_property: [ SELF, group_description  ] } } 
+              env:                    { default: { get_property: [ SELF, env ] } }
           delete:  
-            implementation: playbooks/security_rule_delete.yml 
+            implementation: 
+              primary: playbooks/security_rule_delete.yml 
+              dependencies:
+                - playbooks/egi_refresh_token.yml
             inputs:  
-              group_name:             { default: { get_property: [ SELF, group_name         ] } }             
+              group_name:             { default: { get_property: [ SELF, group_name         ] } }
+              env:                    { default: { get_property: [ SELF, env ] } }             
       

@@ -1,0 +1,72 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - modules/openstack/openstack_keypair.yaml
+  - modules/openstack/openstack_security_rule.yaml
+  - modules/openstack/openstack_vm.yaml
+
+topology_template:
+
+  inputs:
+    ssh-key-name:  
+      type: string 
+    ssh-public-key:  
+      type: string 
+    image-name:  
+      type: string 
+    openstack-network-name:  
+      type: string 
+    openstack-floating-ip-pool:  
+      type: string 
+    security-groups:  
+      type: string    
+    flavor-name:  
+      type: string
+    env:
+      type: map 
+
+  node_templates:
+
+    keypair-gridftp:
+      type: sodalite.nodes.OpenStack.Keypair
+      properties:  
+        name: { get_input: ssh-key-name } 
+        public_key: { get_input: ssh-public-key } 
+        env: { get_input: env } 
+
+    security-rules-gridftp:  
+      type: sodalite.nodes.OpenStack.SecurityRules 
+      properties:  
+        ports:  
+          gridftp-control:  
+            protocol: tcp 
+            remote_ip_prefix: 0.0.0.0/0 
+            port_range_min: 2811 
+            port_range_max: 2811 
+            direction: egress
+          gridftp-data:  
+            port_range_min: 50000 
+            port_range_max: 50100 
+            protocol: tcp 
+            remote_ip_prefix: 0.0.0.0/0 
+            direction: egress
+        group_name: gridftp-client
+        group_description: GridFTP - security group 
+        env: { get_input: env } 
+
+    gridftp-client-vm:  
+      type: sodalite.nodes.OpenStack.VM 
+      properties:  
+        name:  gridftp-client
+        key_name:         { get_input: ssh-key-name } 
+        image:            { get_input: image-name }
+        network:          { get_input: openstack-network-name } 
+        security_groups:  { get_input: security-groups } 
+        flavor:           { get_input: flavor-name }
+        username: centos
+        include_exporter: false
+        timeout: 666
+        floating_ip_pools: { get_input: openstack-floating-ip-pool } 
+        env: { get_input: env } 
+      requirements:  
+       - protected_by:  security-rules-gridftp

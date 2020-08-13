@@ -5,6 +5,7 @@ SHELL=/bin/bash
 clinical:
 	rsync -av \
 	    --include=modules/hpc \
+	    --include=modules/openstack \
 	    --exclude=modules/* \
 	    modules clinical-uc/hpc-clinical-uc/
 
@@ -18,7 +19,12 @@ snow:
 	    --exclude=modules/{hpc,tests} \
 	    modules snow-uc/snow-demo/
 
-all: clinical vehicle snow
+egi-demo:
+	rsync -av \
+	    --exclude=modules/{hpc,tests} \
+	    modules egi/
+
+all: clinical vehicle snow egi
 
 # Clean-up part
 clean-clinical:
@@ -30,4 +36,7 @@ clean-vehicle:
 clean-snow:
 	rm -rf snow-uc/snow-demo/modules
 
-clean-all: clean-clinical clean-vehicle clean-snow
+clean-egi:
+	rm -rf egi/modules
+
+clean-all: clean-clinical clean-vehicle clean-snow clean-egi

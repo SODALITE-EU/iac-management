@@ -1,6 +1,14 @@
 ---
+- name: Refresh token and update env
+  import_playbook: egi_refresh_token.yml
+  when: env.checkin_env is defined
+
 - hosts: all
   gather_facts: no
+  vars:
+    exporter_meta:
+      prometheus_io_scrape: "true"
+      prometheus_io_port: "9100"
   tasks:
     - name: Create VM
       os_server:
@@ -11,10 +19,11 @@
         flavor: "{{ flavor }}"
         network: "{{ network }}"
         security_groups: "{{ security_groups }}"
-        meta:
-          prometheus_io_scrape: "true"
-          prometheus_io_port: "9100"
+        timeout: "{{ timeout }}"
+        floating_ip_pools: "{{ floating_ip_pools }}"
+        meta: "{{ exporter_meta if (include_exporter is defined and include_exporter == True) else {} }}"
       register: server_info
+      environment: "{{ os_env if os_env is defined }}"
 
     - name: Set attributes
       set_stats:

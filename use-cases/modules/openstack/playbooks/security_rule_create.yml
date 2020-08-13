@@ -1,4 +1,8 @@
 ---
+- name: Refresh token and update env
+  import_playbook: egi_refresh_token.yml
+  when: env.checkin_env is defined
+
 - hosts: all
   gather_facts: no
 
@@ -8,6 +12,7 @@
         name: "{{ group_name }}"
         state: present
         description: "{{ group_description }}"
+      environment: "{{ os_env if os_env is defined }}"
 
     - name: Add security rules 
       os_security_group_rule:
@@ -18,3 +23,4 @@
         remote_ip_prefix: "{{ item.value.remote_ip_prefix }}"
         direction: "{{ item.value.direction if item.value.direction is defined else 'ingress' }}"
       loop: "{{ ports | dict2items }}"
+      environment: "{{ os_env if os_env is defined }}"
