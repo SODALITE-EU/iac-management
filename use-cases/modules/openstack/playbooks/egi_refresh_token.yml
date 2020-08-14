@@ -69,15 +69,23 @@
       register: site_xml
 
     # TODO: Check the PRODUCTION state
-    - name: Parse site xml response
-      xml:
-        xmlstring: "{{ site_xml.content }}"
-        xpath: /results/SERVICE_ENDPOINT/URL
-        content: text
-      register: site_xml
+    # # xml module version to obtain URL
+    # - name: Parse site xml response
+    #   xml:
+    #     xmlstring: "{{ site_xml.content }}"
+    #     xpath: /results/SERVICE_ENDPOINT/URL
+    #     content: text
+    #   register: site_xml
 
+    # - set_fact:
+    #     site_endpoint: "{{ site_xml.matches.0.URL }}"
+
+    # - debug:
+    #     msg: "{{ site_endpoint }}"
+
+    # regex version to obtain URL
     - set_fact:
-        site_endpoint: "{{ site_xml.matches.0.URL }}"
+        site_endpoint: "{{ site_xml.content | regex_search('<URL>(.+)</URL>', '\\1') | first }}"
 
     - debug:
         msg: "{{ site_endpoint }}"
