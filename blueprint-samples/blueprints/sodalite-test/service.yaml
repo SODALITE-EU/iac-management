@@ -1,0 +1,60 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - modules/site/types.yaml
+  - modules/docker/docker_registry.yaml
+  - modules/docker/docker_component.yaml
+
+node_types:
+
+  sodalite.nodes.Compute:
+    derived_from: tosca.nodes.Compute
+    properties: 
+      username:
+        type: string
+
+topology_template:
+
+  inputs:  
+    docker-host-ip:  
+      type: string 
+    username:  
+      type: string 
+
+  node_templates:
+    sodalite-vm:
+      type: sodalite.nodes.Compute
+      properties:
+        username:  { get_input: username } 
+      attributes:
+        private_address:   { get_input: docker-host-ip } 
+        public_address:  { get_input: docker-host-ip } 
+        
+    docker-public-registry:
+      type: sodalite.nodes.DockerRegistry
+      properties:  
+        docker_registry_url: registry.hub.docker.com
+      requirements:
+        - host: sodalite-vm
+        
+    site:
+      type: sodalite.nodes.nginx.Site
+      properties:  
+        destination: /tmp/index.html
+      requirements:
+        - host: sodalite-vm   
+        
+    nginx-container:
+      type: sodalite.nodes.DockerizedComponent
+      properties:
+        image_name: library/nginx:latest
+        volumes:
+          - "/tmp/index.html:/usr/share/nginx/html/index.html"
+        ports: ['5555:80']
+        alias: nginx-sodalite-test
+      requirements:
+        - host:  sodalite-vm
+        - registry: docker-public-registry         
+
+
+
