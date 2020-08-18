@@ -32,6 +32,11 @@
 
     - name: "When private repository, configure puller"
       block:
+        - name: "Check private registry and output"
+          fail:
+            msg: For private registry the output should be specified
+          when: output is not defined
+
         - name: "Create certs dir"
           file:
             dest: "{{ certs_location }}"

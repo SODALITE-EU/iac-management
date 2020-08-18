@@ -9,6 +9,12 @@ clinical:
 	    --exclude=modules/* \
 	    modules clinical-uc/hpc-clinical-uc/
 
+modak:
+	rsync -av \
+	    --include=modules/hpc \
+	    --exclude=modules/* \
+	    modules clinical-uc/solver-modak/
+
 vehicle:
 	rsync -av \
 	    --exclude=modules/{hpc,tests} \
@@ -30,6 +36,9 @@ all: clinical vehicle snow egi
 clean-clinical:
 	rm -rf clinical-uc/hpc-clinical-uc/modules
 
+clean-modak:
+	rm -rf clinical-uc/solver-modak/modules
+
 clean-vehicle:
 	rm -rf vehicleiot-uc/full-demo/modules
 
@@ -39,4 +48,4 @@ clean-snow:
 clean-egi:
 	rm -rf egi/modules
 
-clean-all: clean-clinical clean-vehicle clean-snow clean-egi
+clean-all: clean-clinical clean-vehicle clean-snow clean-egi clean-modak

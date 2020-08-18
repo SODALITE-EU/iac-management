@@ -26,10 +26,17 @@
     PATH: "{{ ansible_env.PATH }}:/usr/sbin"
   tasks:
 
+    - set_fact:
+        output_exists: "{{ output is defined and output | length > 0 }}"
+
     - name: "Check image existence"
       stat:
         path: "{{ images_location }}/{{ output }}"
       register: image_status
+      when: output_exists
+
+    - set_fact:
+        image_exists: "{{ output_exists and image_status.stat.exists == true }}"
 
     - name: "When private repository, download using puller"
       block:
@@ -45,12 +52,22 @@
               {{ images_location }}/{{ output }} \
               docker-archive://{{ images_location }}/{{ output }}.tar.gz
 
-      when: image_status.stat.exists == false and registry == 'private'
+      when: image_exists == false and registry == 'private'
 
     - name: "Otherwise, download normally"
-      shell: >
-        singularity pull \
-          --dir {{ images_location }} \
-          {{ output }} \
-          {{ registry }}://{{ image }}
-      when: image_status.stat.exists == false and registry != 'private'
+      block:
+        - name: Pulling image
+          shell: >
+            singularity pull \
+              --dir {{ images_location }} \
+              {{ output }} \
+              {{ registry }}://{{ image }}
+          register: pull_status 
+          ignore_errors: yes
+        
+        # ignoring only "Image file already exists" error
+        - fail:
+            msg: Error occurred while pulling
+          when: "pull_status.rc != 0 and 'Image file already exists' not in pull_status.stderr" 
+
+      when: image_exists == false and registry != 'private'

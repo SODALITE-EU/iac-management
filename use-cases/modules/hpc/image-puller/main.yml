@@ -7,6 +7,9 @@ node_types:
     properties:
       output:
         type: "string"
+        required: false
+        default: ""
+        description: "Output name of SIF file. Must be specified when registry is private"
       image:
         type: "string"
       registry:

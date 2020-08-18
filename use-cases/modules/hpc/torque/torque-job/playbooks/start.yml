@@ -24,17 +24,28 @@
     job_workspace_path: '{{ ( ( job_workspace != None ) | ternary(job_workspace, ansible_env.HOME) ) | replace("~", ansible_env.HOME) }}'
   tasks:
     - name: Submit the job
-      shell: qsub {{ job_name }}.pbs
+      shell: qsub -V {{ job_name }}.pbs
       args:
         chdir: "{{ job_workspace_path }}"
       register: job
+      environment: "{{ job_env if job_env is defined }}"
 
     - name: Saving job_id
       set_fact:
         job_id: "{{ job.stdout }}"
 
+    - name: Obtain walltime
+      shell: qstat -f {{ job_id }} | grep 'Resource_List.walltime' | egrep -o '[^ ]+$'
+      register: walltime_result
+
+    - name: Obtain job name
+      shell: qstat -f {{ job_id }} | grep 'Job_Name' | egrep -o '[^ ]+$'
+      register: job_name_result
+
     - name: Set attribute
       set_stats:
         data:
-          job_id: "{{ job.stdout }}"
+          job_id: "{{ job_id }}"
+          job_name: "{{ job_name_result.stdout }}"
+          job_walltime: "{{ walltime_result.stdout }}"
 

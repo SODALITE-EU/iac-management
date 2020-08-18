@@ -1,0 +1,280 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - modules/hpc/torque/main.yml
+  - modules/hpc/image-puller/main.yml
+  - modules/hpc/data/mover/main.yml
+  - modules/hpc/modak/job/main.yml
+
+topology_template:
+
+  inputs:
+    frontend-address:
+      type: string
+    user:
+      type: string
+    key-location:
+      type: string
+    email:
+      type: string
+    images-location:
+      type: string
+    density-mapping-script:
+      type: string
+    probabilistic-mapping-script:
+      type: string
+    boundary-condition-script:
+      type: string
+    solver-script:
+      type: string
+    mapper-data-input:
+      type: string
+    mapper-data-output-struct:
+      type: string
+    solver-data:
+      type: string
+
+
+    modak-endpoint:
+      type: string
+    modak-job-script:
+      type: string
+
+
+    ssh-key-name:  
+      type: string 
+    image-name:  
+      type: string 
+    openstack-network-name:  
+      type: string 
+    security-groups:  
+      type: string    
+    flavor-name:  
+      type: string                   
+
+  node_templates:
+
+    hpc-wm-torque:
+      type: sodalite.nodes.hpc.wm.torque
+      attributes:
+        public_address: { get_input: frontend-address }
+        username: { get_input: user }
+        ssh-key: { get_input: key-location }
+
+    modak-instance:
+      type: sodalite.nodes.modak
+      properties:
+        endpoint: { get_input: modak-endpoint }
+
+### image pulling
+
+    mpi-test-image:
+      type: sodalite.image_puller.singularity
+      properties:
+        image: "ethcscs/mpich:ub1804_cuda101_mpi314_gnugprof"
+        registry: "docker"
+        # images_location: { get_input: images-location }
+        images_location: /mnt/nfs/home/kamil/singularity_images
+      requirements:
+        - host: hpc-wm-torque
+
+### modak job parameters
+
+    mpi-test-modak-job:
+      type: sodalite.nodes.modak.job
+      properties:
+
+        job_script: { get_input: modak-job-script }
+
+        job_options:
+          job_name: "mpi_test"
+          wall_time_limit: "1:00:00"
+          node_count: 2
+          core_count: 40
+          process_count_per_node: 40
+          standard_output_file: "mpi_test.out"
+          standard_error_file: "mpi_test.err"
+          combine_stdout_stderr: true
+          request_event_notification: "abe"
+          email_address: tokmakov@hlrs.de
+
+        application:
+          app_tag: "mpi_test"
+          container_runtime: "docker://ethcscs/mpich:ub1804_cuda101_mpi314_gnugprof"
+          app_type: "hpc"
+          executable: "./xthi"
+          arguments: ""
+          mpi_ranks: 80
+          threads: 2
+          build:
+            src: "https://raw.githubusercontent.com/olcf/XC30-Training/master/affinity/Xthi.c"
+            build_command: "mpicc -o xthi -fopenmp Xthi.c"
+
+        target:
+          name: "hlrs_testbed"
+          queue_type: "torque"
+
+        optimisation:
+          enable_opt_build: true
+          enable_autotuning: false
+          app_type: "hpc"
+          opt_build: 
+            cpu_type: "x86"
+            acc_type: ""
+          app_type-hpc: 
+            config:
+              parallelisation: "mpi"
+            data: {}
+            parallelisation-mpi: 
+              library: "mpich"
+              version: "3.1.4"
+
+      requirements:
+        - modak_endpoint: modak-instance
+        - dependency: mpi-test-image
+
+### job configs
+
+    mpi-test-job-config:
+      type: sodalite.nodes.hpc.job.torque.preconfigured
+      properties:
+        name: solver
+        script: { get_input: modak-job-script }
+        workspace: ~/workflow-mpi-test
+        enable_audit: true
+        env:
+          SINGULARITY_DIR: /mnt/nfs/home/kamil/singularity_images
+          # SINGULARITY_DIR: { get_input: images-location } # tosca functions do not yet work in maps
+      requirements:
+        - host: hpc-wm-torque
+        - dependency: mpi-test-modak-job
+
+### job workflow
+
+    mpi-test-job:
+      type: sodalite.nodes.hpc.job.torque
+      requirements:
+        - host: hpc-wm-torque
+        - configured_job: mpi-test-job-config
+
+### job result
+
+    mpi-test-job-result:
+      type: sodalite.nodes.hpc.job.torque.result
+      requirements:
+        - host: hpc-wm-torque
+        - job: mpi-test-job
+
+
+# ### image pulling
+
+#     code-aster-image:
+#       type: sodalite.image_puller.singularity
+#       properties:
+#         image: "quay.io/tianyikillua/code_aster"
+#         registry: "docker"
+#         # images_location: { get_input: images-location }
+#         images_location: /mnt/nfs/home/kamil/singularity_images
+#       requirements:
+#         - host: hpc-wm-torque
+
+# ### job configs
+
+#     solver-job-config:
+#       type: sodalite.nodes.hpc.job.torque.preconfigured
+#       properties:
+#         name: solver
+#         script: { get_input: solver-script }
+#         workspace: ~/workflow-container
+#         enable_audit: true
+#         env:
+#           SINGULARITY_DIR: /mnt/nfs/home/kamil/singularity_images
+#           # SINGULARITY_DIR: { get_input: images-location } # tosca functions do not yet work in maps
+#       requirements:
+#         - host: hpc-wm-torque
+
+# ### job workflow
+
+#     solver-job:
+#       type: sodalite.nodes.hpc.job.torque
+#       requirements:
+#         - host: hpc-wm-torque
+#         - configured_job: solver-job-config
+
+# ### job result
+
+#     solver-job-result:
+#       type: sodalite.nodes.hpc.job.torque.result
+#       requirements:
+#         - host: hpc-wm-torque
+#         - job: solver-job
+
+### data staging
+
+    # gridftp-client-host:
+    #   type: sodalite.nodes.remote.client
+    #   attributes:
+    #     public_address: localhost
+    #     username: { get_input: user }
+    #     ssh-key: { get_input: key-location }
+
+    # input-data-mapper-transfer:
+    #   type: sodalite.data.mover.gridftp
+    #   properties:
+    #     name: Transfer client data to server
+    #     src_protocol: file
+    #     src_address: localhost
+    #     src_port: ~
+    #     src_path: { get_input: mapper-data-input }
+    #     dst_protocol: gsiftp
+    #     dst_address: { get_input: frontend-address }
+    #     dst_port: ~
+    #     dst_path: ~/workflow-container/input/
+    #   requirements:
+    #     - client: gridftp-client-host
+
+    # output-struct-data-mapper-transfer:
+    #   type: sodalite.data.mover.gridftp
+    #   properties:
+    #     name: Transfer client data to server
+    #     src_protocol: file
+    #     src_address: localhost
+    #     src_port: ~
+    #     src_path: { get_input: mapper-data-output-struct }
+    #     dst_protocol: gsiftp
+    #     dst_address: { get_input: frontend-address }
+    #     dst_port: ~
+    #     dst_path: ~/workflow-container/output/
+    #   requirements:
+    #     - client: gridftp-client-host
+
+# ### job configs
+
+#     solver-job-config:
+#       type: sodalite.nodes.hpc.job.torque.configuration
+#       properties:
+#         name: solver
+#         script: { get_input: solver-script }
+#         workspace: ~/workflow-container
+#         ppn: 4
+#         walltime: 00:30:00
+#         email: { get_input: email }
+#         enable_audit: true
+#       requirements:
+#         - host: hpc-wm-torque
+
+# ### job workflow
+
+#     solver-job:
+#       type: sodalite.nodes.hpc.job.torque
+#       requirements:
+#         - host: hpc-wm-torque
+#         - configured_job: solver-job-config
+
+# ### job result
+
+#     solver-job-result:
+#       type: sodalite.nodes.hpc.job.torque.result
+#       requirements:
+#         - host: hpc-wm-torque
+#         - job: solver-job

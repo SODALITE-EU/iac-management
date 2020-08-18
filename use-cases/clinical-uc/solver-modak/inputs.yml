@@ -1,0 +1,19 @@
+frontend-address:
+user:
+key-location:
+email:
+images-location:
+density-mapping-script:
+probabilistic-mapping-script:
+boundary-condition-script:
+solver-script:
+mapper-data-input:
+mapper-data-output-struct:
+# solver-data:
+modak-endpoint:
+modak-job-script:
+ssh-key-name:
+image-name:
+openstack-network-name:
+security-groups:
+flavor-name:
