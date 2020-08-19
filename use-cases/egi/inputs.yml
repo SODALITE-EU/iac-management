@@ -5,6 +5,7 @@ openstack-network-name:
 openstack-floating-ip-pool:
 security-groups:
 flavor-name:
+username:  
 env:
   checkin_env:
     CHECKIN_CLIENT_ID:

@@ -24,7 +24,8 @@ topology_template:
       type: string
     env:
       type: map 
-
+    username:
+      type: string 
   node_templates:
 
     keypair-gridftp:
@@ -63,10 +64,11 @@ topology_template:
         network:          { get_input: openstack-network-name } 
         security_groups:  { get_input: security-groups } 
         flavor:           { get_input: flavor-name }
-        username: centos
+        username:         { get_input: username }
         include_exporter: false
         timeout: 666
         floating_ip_pools: { get_input: openstack-floating-ip-pool } 
         env: { get_input: env } 
       requirements:  
        - protected_by:  security-rules-gridftp
+       - dependency: keypair-gridftp
