@@ -85,7 +85,7 @@
 
     # regex version to obtain URL
     - set_fact:
-        site_endpoint: "{{ site_xml.content | regex_search('<URL>(.+)</URL>', '\\1') | first }}"
+        site_endpoint: "{{ ( site_xml.content | regex_search('<URL>(.+)</URL>', '\\1') | first ).rstrip('/') }}"
 
     - debug:
         msg: "{{ site_endpoint }}"
