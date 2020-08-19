@@ -160,7 +160,10 @@
             OS_IDENTITY_PROVIDER: "egi.eu"
             OS_PROTOCOL: "{{ PROTOCOL }}"
             OS_ACCESS_TOKEN: "{{ access_token }}"
-            OS_PROJECT_ID: "{{ project_id }}"
+            OS_PROJECT_ID: "{{ project_id }}"   
+            OS_USER_DOMAIN_NAME: ""
+            OS_REGION_NAME: ""
+            OS_PROJECT_NAME: ""        
 
       - debug:
           msg: "{{ os_env }}"
