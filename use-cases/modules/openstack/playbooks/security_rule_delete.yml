@@ -7,6 +7,10 @@
   gather_facts: no
 
   tasks:
+    - set_fact:
+        os_env: "{{ env.os_env }}"
+      when: env.os_env is defined  
+
     - name: Delete security group
       os_security_group:  
         name: "{{ group_name }}"

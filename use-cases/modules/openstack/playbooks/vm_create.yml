@@ -10,6 +10,10 @@
       prometheus_io_scrape: "true"
       prometheus_io_port: "9100"
   tasks:
+    - set_fact:
+        os_env: "{{ env.os_env }}"
+      when: env.os_env is defined  
+
     - name: Create VM
       os_server:
         state: present
@@ -50,3 +54,4 @@
   tasks:
     - name: Wait for ssh to wake up
       wait_for_connection:
+      environment: "{{ os_env if os_env is defined }}"

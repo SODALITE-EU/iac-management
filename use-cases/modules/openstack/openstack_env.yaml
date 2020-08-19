@@ -35,13 +35,43 @@ data_types:
     properties:  
       OS_AUTH_URL:  
         type: string 
+        default:
       OS_AUTH_TYPE:  
         type: string 
+        default:
       OS_IDENTITY_PROVIDER:  
         type: string 
+        default:
       OS_PROTOCOL:  
         type: string
+        default:
       OS_ACCESS_TOKEN:  
         type: string
+        default:
       OS_PROJECT_ID:  
         type: string
+        default:
+      OS_PROJECT_NAME:  
+        type: string 
+        default:
+      OS_PROJECT_DOMAIN_ID: 
+        type: string 
+        default:   
+      OS_USER_DOMAIN_NAME:  
+        type: string 
+        default:
+      OS_REGION_NAME:  
+        type: string 
+        default:
+      OS_USERNAME:  
+        type: string
+        default:
+      OS_PASSWORD:  
+        type: string
+        default:
+      OS_INTERFACE: 
+        type: string
+        default:
+      OS_IDENTITY_API_VERSION: 
+        type: string
+        default:          
