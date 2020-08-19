@@ -1,0 +1,107 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - modules/openstack/openstack_keypair.yaml
+  - modules/openstack/openstack_security_rule.yaml
+  - modules/openstack/openstack_vm.yaml
+
+topology_template:
+
+  inputs:
+    ssh-key-name:  
+      type: string 
+    ssh-public-key:  
+      type: string 
+    egi-image-name:  
+      type: string 
+    egi-openstack-network-name:  
+      type: string 
+    egi-openstack-floating-ip-pool:  
+      type: string 
+    egi-security-groups:  
+      type: string    
+    egi-flavor-name:  
+      type: string
+    egi-env:
+      type: map 
+    egi-username:
+      type: string 
+    atos-image-name:  
+      type: string 
+    atos-openstack-network-name:  
+      type: string 
+    atos-openstack-floating-ip-pool:  
+      type: string 
+    atos-security-groups:  
+      type: string    
+    atos-flavor-name:  
+      type: string
+    atos-env:
+      type: map 
+    atos-username:
+      type: string       
+  node_templates:
+
+    keypair-egi:
+      type: sodalite.nodes.OpenStack.Keypair
+      properties:  
+        name: { get_input: ssh-key-name } 
+        public_key: { get_input: ssh-public-key } 
+        env: { get_input: egi-env } 
+
+    keypair-atos:
+      type: sodalite.nodes.OpenStack.Keypair
+      properties:  
+        name: { get_input: ssh-key-name } 
+        public_key: { get_input: ssh-public-key } 
+        env: { get_input: atos-env }         
+
+    egi-client-vm:  
+      type: sodalite.nodes.OpenStack.VM 
+      properties:  
+        name: egi-atos-test
+        key_name:         { get_input: ssh-key-name } 
+        image:            { get_input: egi-image-name }
+        network:          { get_input: egi-openstack-network-name } 
+        security_groups:  { get_input: egi-security-groups } 
+        flavor:           { get_input: egi-flavor-name }
+        username:         { get_input: egi-username }
+        include_exporter: false
+        timeout: 666
+        floating_ip_pools: { get_input: egi-openstack-floating-ip-pool } 
+        env: { get_input: egi-env } 
+      requirements:  
+       - dependency: keypair-egi
+
+    atos-client-vm:  
+      type: sodalite.nodes.OpenStack.VM 
+      properties:  
+        name:  egi-atos-test
+        key_name:         { get_input: ssh-key-name } 
+        image:            { get_input: atos-image-name }
+        network:          { get_input: atos-openstack-network-name } 
+        security_groups:  { get_input: atos-security-groups } 
+        flavor:           { get_input: atos-flavor-name }
+        username:         { get_input: atos-username }
+        include_exporter: false
+        timeout: 666
+        floating_ip_pools: { get_input: atos-openstack-floating-ip-pool } 
+        env: { get_input: atos-env } 
+      requirements:  
+       - dependency: keypair-atos       
+
+    atos-client-vm-2:  
+      type: sodalite.nodes.OpenStack.VM 
+      properties:  
+        name:  egi-atos-test-2
+        key_name:         { get_input: ssh-key-name } 
+        image:            { get_input: atos-image-name }
+        network:          { get_input: atos-openstack-network-name } 
+        security_groups:  { get_input: atos-security-groups } 
+        flavor:           { get_input: atos-flavor-name }
+        username:         { get_input: atos-username }
+        include_exporter: false
+        timeout: 666
+        floating_ip_pools: { get_input: atos-openstack-floating-ip-pool } 
+      # requirements:  
+      #  - dependency: keypair-atos          

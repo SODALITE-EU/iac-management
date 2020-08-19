@@ -1,0 +1,32 @@
+ssh-key-name: 
+ssh-public-key: 
+egi-image-name: 
+egi-openstack-network-name: 
+egi-openstack-floating-ip-pool: 
+egi-security-groups: default
+egi-flavor-name: m1.medium
+egi-username: centos
+egi-env:
+  checkin_env:
+    CHECKIN_CLIENT_ID: 
+    CHECKIN_CLIENT_SECRET: 
+    CHECKIN_REFRESH_TOKEN: 
+    EGI_SITE: 
+atos-image-name: centos7
+atos-openstack-network-name: orchestrator-network
+atos-openstack-floating-ip-pool:
+atos-security-groups: default,sodalite-remote-access
+atos-flavor-name: m1.medium
+atos-username: centos
+atos-env:
+  os_env:
+    OS_AUTH_URL: https://cloud.sodalite.eu:5000
+    OS_PROJECT_ID:
+    OS_PROJECT_NAME: 
+    OS_USER_DOMAIN_NAME: Default
+    OS_PROJECT_DOMAIN_ID: default
+    OS_REGION_NAME: RegionOne
+    OS_USERNAME: 
+    OS_PASSWORD: 
+    OS_INTERFACE: public
+    OS_IDENTITY_API_VERSION: 3
