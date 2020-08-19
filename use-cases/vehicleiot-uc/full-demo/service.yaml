@@ -114,6 +114,9 @@ topology_template:
         security_groups:  { get_input: security-groups } 
         flavor:           { get_input: flavor-name }
         username: centos
+        meta:
+          prometheus_io_scrape: true
+          prometheus_io_port: 9100
       requirements:  
        - protected_by:  security-rules-vehicle-iot-full
 
