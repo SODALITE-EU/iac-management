@@ -26,6 +26,7 @@
         timeout: "{{ timeout }}"
         floating_ip_pools: "{{ floating_ip_pools }}"
         meta: "{{ exporter_meta if (include_exporter is defined and include_exporter == True) else {} }}"
+        userdata: "{{ userdata }}"
       register: server_info
       environment: "{{ os_env if os_env is defined }}"
 

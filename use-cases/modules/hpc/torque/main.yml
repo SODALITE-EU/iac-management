@@ -72,7 +72,7 @@ node_types:
           Select queue for the job.
           Infrastructure specific - default and constraints values MUST be provided by Resource Expert
         required: false
-        default: "batch"
+        default: ""
         constraints:
           - valid_values: [ "batch", "ssd", "gpu", "cpu" ]
       scratch:
@@ -152,6 +152,7 @@ node_types:
               dependencies: 
                 - torque-job/templates/audit.sh.j2
                 - torque-job/templates/job.pbs.j2
+                - torque-job/artifacts/jobs
 
 
   sodalite.nodes.hpc.job.torque.configuration.node: 
@@ -189,6 +190,7 @@ node_types:
               dependencies: 
                 - torque-job/templates/audit.sh.j2
                 - torque-job/templates/job.pbs.j2
+                - torque-job/artifacts/jobs
      
   sodalite.nodes.hpc.job.torque.preconfigured:
     description: >
@@ -214,6 +216,7 @@ node_types:
               dependencies: 
                 - torque-job/templates/audit.sh.j2
                 - torque-job/templates/preconfigured-job.pbs.j2
+                - torque-job/artifacts/jobs
 
   sodalite.nodes.hpc.job.torque: 
     description: >

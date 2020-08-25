@@ -1,0 +1,13 @@
+hlrs-frontend-address:
+hlrs-user:
+hlrs-key-location:
+egi-frontend-address:
+egi-user:
+egi-key-location:
+email:
+ssh-key-name:
+image-name:
+openstack-network-name:
+security-groups:
+flavor-name:
+userdata:

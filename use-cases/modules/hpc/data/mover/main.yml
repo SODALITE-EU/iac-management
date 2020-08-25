@@ -1,20 +1,9 @@
 tosca_definitions_version: tosca_simple_yaml_1_3
 
-data_types:
-  sodalite.datatypes.data.mover.gridftpSpec: # nested datatypes not supported
-    derived_from: tosca.datatypes.Root
-    properties:
-      protocol:
-        type: string
-        constraints:
-          - valid_values: [ "ftp", "sshftp", "gsiftp", "file" ]
-      address:
-        type: string
-      port:
-        type: tosca.datatypes.network.PortDef
-        required: false
-      path:
-        type: string
+capability_types:
+
+  sodalite.capabilities.data.mover.GridFTPClient:
+    derived_from: tosca.capabilities.Root
 
 node_types:
 
@@ -90,11 +79,73 @@ node_types:
             implementation: 
               primary: playbooks/create-url.yml
 
+
+  sodalite.data.mover.gridftp-client: 
+    description: >
+      GridFTP client
+    derived_from: tosca.nodes.SoftwareComponent
+    capabilities:
+      client:
+        type: sodalite.capabilities.data.mover.GridFTPClient
+        valid_source_types: [ sodalite.data.mover.gridftp ]
+    properties:
+      cert_path:
+        type: string
+        required: false
+        default: null
+        description: >
+          Location of certificates, where certificate artifacts (artifacts/certs) will be copied to
+      cert:
+        type: string
+        required: false
+        default: "usercert.pem"
+      key:
+        type: string
+        required: false
+        default: "userkey.pem"
+      certdir:
+        type: string
+        required: false
+        default: "certificates"
+      initial_data_path:
+        type: string
+        required: false
+        default: null
+        description: >
+          Location of initial data, where data artifacts (artifacts/data) will be copied to
+      hostnames:
+        type: map
+        required: false
+        default: {}
+      env:
+        type: map
+        required: false
+        default: {}
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        operations:
+          configure:
+            inputs:
+              cert_path: { default: { get_property: [SELF, cert_path] } }
+              cert: { default: { get_property: [SELF, cert] } }
+              key: { default: { get_property: [SELF, key] } }
+              certdir: { default: { get_property: [SELF, certdir] } }
+              initial_data_path: { default: { get_property: [SELF, initial_data_path] } }
+              hostnames: { default: { get_property: [SELF, hostnames] } }
+              env: { default: { get_property: [SELF, env] } }
+              ansible_user: { default: { get_property: [SELF, host, username] } }
+            implementation: 
+              primary: playbooks/configure-gridftp-client.yml
+              dependencies: 
+                - artifacts/certs
+                - artifacts/data
+
   sodalite.data.mover.gridftp:
     description: >
       Moves data from "src" location to "dst" location.
       "src" and "dst" must be absolute path
-    derived_from: sodalite.data.mover
+    derived_from: tosca.nodes.SoftwareComponent
     properties:
       name:
         type: string
@@ -106,15 +157,6 @@ node_types:
         default: 1
         constraints:
           - greater_than: 0
-    # attributes:
-      # src:
-      #   type: map
-      #   entry_schema:
-      #     type: sodalite.datatypes.data.mover.gridftpSpec
-      # dst:
-      #   type: map
-      #   entry_schema:
-      #     type: sodalite.datatypes.data.mover.gridftpSpec
       src_protocol:
         type: string
         constraints:
@@ -124,6 +166,7 @@ node_types:
       src_port:
         type: tosca.datatypes.network.PortDef
         required: false
+        default: null
       src_path:
         type: string
       dst_protocol:
@@ -135,29 +178,29 @@ node_types:
       dst_port:
         type: tosca.datatypes.network.PortDef
         required: false
+        default: null
       dst_path:
         type: string
     requirements:
       - client:
-          node: tosca.nodes.Compute
-          capability: tosca.capabilities.Compute
-          relationship: tosca.relationships.HostedOn
+          node: sodalite.data.mover.gridftp-client
+          capability: sodalite.capabilities.data.mover.GridFTPClient
+          relationship: tosca.relationships.DependsOn
     interfaces:
       Standard:
         type: tosca.interfaces.node.lifecycle.Standard
         operations:
           configure:
             inputs:
-              remote_host_public_address: { default: { get_attribute: [SELF, client, public_address] } }
-              remote_host_username: { default: { get_attribute: [SELF, client, username] } }
-              remote_host_keypath: { default: { get_attribute: [SELF, client, ssh-key] } }
+              cert_path: { default: { get_property: [SELF, client, cert_path] } }
+              cert: { default: { get_property: [SELF, client, cert] } }
+              key: { default: { get_property: [SELF, client, key] } }
+              certdir: { default: { get_property: [SELF, client, certdir] } }
+              ansible_user: { default: { get_property: [SELF, host, username] } }
             implementation: 
-              primary: playbooks/configure-gridftp-client.yml
+              primary: playbooks/configure-gridftp-proxy.yml
           start:
             inputs:
-              remote_host_public_address: { default: { get_attribute: [SELF, client, public_address] } }
-              remote_host_username: { default: { get_attribute: [SELF, client, username] } }
-              remote_host_keypath: { default: { get_attribute: [SELF, client, ssh-key] } }
               src_protocol: { default: { get_property: [SELF, src_protocol] } }
               src_address: { default: { get_property: [SELF, src_address] } }
               src_port: { default: { get_property: [SELF, src_port] } }
@@ -166,14 +209,9 @@ node_types:
               dst_address: { default: { get_property: [SELF, dst_address] } }
               dst_port: { default: { get_property: [SELF, dst_port] } }
               dst_path: { default: { get_property: [SELF, dst_path] } }
-              # src_protocol: { default: { get_attribute: [SELF, src, protocol] } }
-              # src_address: { default: { get_attribute: [SELF, src, address] } }
-              # src_port: { default: { get_attribute: [SELF, src, port] } }
-              # src_path: { default: { get_attribute: [SELF, src, path] } }
-              # dst_protocol: { default: { get_attribute: [SELF, dst, protocol] } }
-              # dst_address: { default: { get_attribute: [SELF, dst, address] } }
-              # dst_port: { default: { get_attribute: [SELF, dst, port] } }
-              # dst_path: { default: { get_attribute: [SELF, dst, path] } }
               parallel_streams: { default: { get_property: [SELF, parallel_streams] } }
+              cert_path: { default: { get_property: [SELF, client, cert_path] } }
+              certdir: { default: { get_property: [SELF, client, certdir] } }
+              ansible_user: { default: { get_property: [SELF, host, username] } }
             implementation: 
-              primary: playbooks/start-gridftp-client.yml
+              primary: playbooks/start-gridftp-transfer.yml

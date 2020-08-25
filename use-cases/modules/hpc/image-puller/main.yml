@@ -43,6 +43,7 @@ node_types:
               remote_host_public_address: { default: { get_attribute: [SELF, host, public_address] } }
               remote_host_username: { default: { get_attribute: [SELF, host, username] } }
               remote_host_keypath: { default: { get_attribute: [SELF, host, ssh-key] } }
+              output: { default: { get_property: [SELF, output] } }
               registry: { default: { get_property: [SELF, registry] } }
               certs_location: { default: { get_property: [SELF, certs_location] } }
               images_location: { default: { get_property: [SELF, images_location] } }

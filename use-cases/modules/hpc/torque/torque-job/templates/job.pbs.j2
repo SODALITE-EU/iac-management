@@ -7,7 +7,7 @@
 
 #PBS -m abe
 #PBS -N {{ job_name }}
-#PBS -l nodes={{ job_node_name if job_node_name is defined else job_nb_nodes }}:ppn={{ job_ppn }}{% if job_gpus > 0 %},gpus={{ job_gpus }}{% endif %}{% if job_queue is defined %}:{{ job_queue }}{% endif %},walltime={{ job_walltime }}
+#PBS -l nodes={{ job_node_name if job_node_name is defined else job_nb_nodes }}:ppn={{ job_ppn }}{% if job_gpus > 0 %},gpus={{ job_gpus }}{% endif %}{% if (job_queue is defined) and (job_queue|length > 0) %}:{{ job_queue }}{% endif %},walltime={{ job_walltime }}
 
 {% if job_email is defined and job_email != "" %}
 #PBS -M {{ job_email }}

@@ -9,6 +9,13 @@ clinical:
 	    --exclude=modules/* \
 	    modules clinical-uc/hpc-clinical-uc/
 
+data-mover:
+	rsync -av \
+	    --include=modules/hpc \
+	    --include=modules/openstack \
+	    --exclude=modules/* \
+	    modules clinical-uc/data-mover/
+
 modak:
 	rsync -av \
 	    --include=modules/hpc \
@@ -35,6 +42,9 @@ all: clinical vehicle snow egi
 # Clean-up part
 clean-clinical:
 	rm -rf clinical-uc/hpc-clinical-uc/modules
+
+clean-data-mover:
+	rm -rf clinical-uc/data-mover/modules
 
 clean-modak:
 	rm -rf clinical-uc/solver-modak/modules
