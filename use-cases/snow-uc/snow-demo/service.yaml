@@ -357,6 +357,7 @@ topology_template:
         exposed_ports:  ['80']
       requirements:  
         - host:  snow-docker-host
+        - dependency: snow-demo
         - dependency: snow-docker-volume-demo-output
         - registry: docker-registry 
   
