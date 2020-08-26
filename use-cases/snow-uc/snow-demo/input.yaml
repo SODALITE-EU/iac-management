@@ -7,5 +7,8 @@ docker-network: snow
 docker-registry-url: 10.10.43.54
 docker-registry-cert-country-name: SI
 docker-registry-cert-organization-name: XLAB
-docker-registry-cert-email-address: 
-mysql-db-pass:  
+docker-registry-cert-email-address: test@test.com
+mysql-db-pass: somepassword 
+mysql-env:
+  MYSQL_ROOT_PASSWORD: somepassword
+  MYSQL_DATABASE: wc_crawler_db 
