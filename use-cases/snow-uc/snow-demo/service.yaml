@@ -122,7 +122,7 @@ topology_template:
       requirements:  
         - host:  snow-vm
 
-    docker-registry-certificate:
+    snow-docker-registry-certificate:
       type: sodalite.nodes.RegistryCertificate
       properties:  
         registry_ip:         { get_input: docker-registry-url }
@@ -138,7 +138,7 @@ topology_template:
       requirements:  
         - host:  snow-vm-2     
         
-    docker-registry-certificate-2:
+    snow-docker-registry-certificate-2:
       type: sodalite.nodes.RegistryCertificate
       properties:  
         registry_ip:         { get_input: docker-registry-url }
@@ -149,7 +149,7 @@ topology_template:
         - host: snow-vm-2 
         - dependency: snow-docker-host-2     
         
-    docker-registry:
+    snow-docker-registry:
       type: sodalite.nodes.DockerRegistry
       properties:  
         docker_registry_url: { get_input: docker-registry-url } 
@@ -157,8 +157,8 @@ topology_template:
         - host: snow-vm
         - dependency: snow-docker-host 
         - dependency: snow-docker-host-2
-        - dependency: docker-registry-certificate
-        - dependency: docker-registry-certificate-2
+        - dependency: snow-docker-registry-certificate
+        - dependency: snow-docker-registry-certificate-2
 
     configuration-demo:
       type: sodalite.nodes.ConfigurationDemo  
@@ -210,7 +210,7 @@ topology_template:
       requirements:  
         - host:  snow-docker-host 
         - network: snow-docker-network 
-        - registry: docker-registry 
+        - registry: snow-docker-registry
 
     snow-webcam-crawler:  
       type: sodalite.nodes.DockerizedComponent 
@@ -230,7 +230,7 @@ topology_template:
         - dependency: snow-docker-volume-shots
         - dependency: configuration-demo
         - network: snow-docker-network 
-        - registry: docker-registry    
+        - registry: snow-docker-registry
 
     snow-weather-condition-filter:  
       type: sodalite.nodes.DockerizedComponent 
@@ -255,7 +255,7 @@ topology_template:
         - dependency: snow-docker-volume-daily-shots
         - dependency: configuration-demo
         - network: snow-docker-network
-        - registry: docker-registry 
+        - registry: snow-docker-registry
 
     snow-daily-median-aggregator: 
       type: sodalite.nodes.DockerizedComponent 
@@ -278,7 +278,7 @@ topology_template:
         - dependency: snow-docker-volume-daily-shots
         - dependency: configuration-demo        
         - network: snow-docker-network
-        - registry: docker-registry 
+        - registry: snow-docker-registry
 
     snow-skyline-extractor:  
       type: sodalite.nodes.DockerizedComponent 
@@ -290,7 +290,7 @@ topology_template:
         exposed_ports:  ['8080'] 
       requirements:  
         - host:  snow-docker-host-2 
-        - registry: docker-registry 
+        - registry: snow-docker-registry
 
     snow-skyline-alignment:  
       type: sodalite.nodes.DockerizedComponent 
@@ -302,7 +302,7 @@ topology_template:
         ports:  ["8081:8080","80:8080"]
       requirements:  
         - host:  snow-docker-host-2 
-        - registry: docker-registry 
+        - registry: snow-docker-registry
 
     #DEMO
     snow-docker-volume-demo-output:
@@ -323,7 +323,7 @@ topology_template:
       requirements:  
         - host:  snow-docker-host 
         - network: snow-docker-network  
-        - registry: docker-registry           
+        - registry: snow-docker-registry
     
     snow-demo: 
       type: sodalite.nodes.DockerizedComponent 
@@ -345,7 +345,7 @@ topology_template:
         - dependency: snow-docker-volume-demo-output
         - dependency: configuration-demo    
         - network: snow-docker-network 
-        - registry: docker-registry        
+        - registry: snow-docker-registry
 
     snow-demo-nginx:   
       type: sodalite.nodes.DockerizedComponent 
@@ -361,5 +361,5 @@ topology_template:
         - host:  snow-docker-host
         - dependency: snow-demo
         - dependency: snow-docker-volume-demo-output
-        - registry: docker-registry 
+        - registry: snow-docker-registry
   
