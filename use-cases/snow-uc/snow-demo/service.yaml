@@ -182,6 +182,7 @@ topology_template:
         name: snow_volume_shots
       requirements:
         - host: snow-vm 
+        - dependency: snow-docker-host         
 
     snow-docker-volume-masks:
       type: sodalite.nodes.DockerVolume
@@ -189,6 +190,7 @@ topology_template:
         name: snow_volume_masks
       requirements:
         - host: snow-vm  
+        - dependency: snow-docker-host         
             
     snow-docker-volume-daily-shots:
       type: sodalite.nodes.DockerVolume
@@ -196,6 +198,7 @@ topology_template:
         name: snow_volume_daily_shots
       requirements:
         - host: snow-vm  
+        - dependency: snow-docker-host         
 
     snow-mysql:  
       type: sodalite.nodes.DockerizedComponent 
@@ -310,7 +313,8 @@ topology_template:
       properties:  
         name: snow_volume_demo_output
       requirements:
-        - host: snow-vm    
+        - host: snow-vm
+        - dependency: snow-docker-host         
 
     snow-webcam-mockup:  
       type: sodalite.nodes.DockerizedComponent 
