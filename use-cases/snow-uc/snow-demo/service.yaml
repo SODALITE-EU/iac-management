@@ -156,7 +156,9 @@ topology_template:
       requirements:
         - host: snow-vm
         - dependency: snow-docker-host 
-        - dependency: snow-docker-host-2         
+        - dependency: snow-docker-host-2
+        - dependency: docker-registry-certificate
+        - dependency: docker-registry-certificate-2
 
     configuration-demo:
       type: sodalite.nodes.ConfigurationDemo  
