@@ -20,9 +20,9 @@ node_types:
         type: tosca.interfaces.node.lifecycle.Standard
         operations:
           create:
+            inputs:
+              host_public_address:      { default: { get_attribute: [ SELF, host, public_address ] } }
             implementation:
-              inputs:
-                host_public_address:      { default: { get_attribute: [ SELF, host, public_address ] } }
               primary: playbooks/create_docker_host.yml
           delete:
             implementation:
