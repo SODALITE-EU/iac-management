@@ -37,4 +37,4 @@ TOSCA/Ansible IaC blueprints targeting SODALITE cloud testbed (openstack) enviro
 Collection of TOSCA/Ansible blueprints targeting SODALITE HPC Torque testbed environment.
 ### use-cases
 SODALITE features [three demontrating use cases](https://sodalite.eu/use_cases) to prove value added for application deployment management through IaC. 
-The `use-cases` directory contains sample TOSCA/Ansible IaC blueprints used for deploying demonstrating use case applications on the SODALITE cloud and HPC testbeds. 
+The `use-cases` directory contains sample TOSCA/Ansible IaC blueprints used for deploying demonstrating use case applications on the SODALITE cloud and HPC testbeds.  
