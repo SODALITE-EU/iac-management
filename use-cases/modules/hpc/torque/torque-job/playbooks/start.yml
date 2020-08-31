@@ -48,4 +48,6 @@
           job_id: "{{ job_id }}"
           job_name: "{{ job_name_result.stdout }}"
           job_walltime: "{{ walltime_result.stdout }}"
+          job_workspace: "{{ job_workspace_path }}"
+          job_enable_audit: "{{ job_enable_audit }}"
 

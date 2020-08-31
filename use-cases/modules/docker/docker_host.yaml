@@ -5,21 +5,27 @@ imports:
 
 node_types:
 
-  sodalite.nodes.DockerHost:  
-    derived_from: tosca.nodes.SoftwareComponent 
-    capabilities:  
-      host:  
-        type: tosca.capabilities.Node 
-        valid_source_types: ['sodalite.nodes.DockerizedComponent'] 
-    interfaces:  
+  sodalite.nodes.DockerHost:
+    derived_from: tosca.nodes.SoftwareComponent
+    attributes:
+      public_address:
+        description: Host's IP
+        type: string
+    capabilities:
+      host:
+        type: tosca.capabilities.Node
+        valid_source_types: ['sodalite.nodes.DockerizedComponent']
+    interfaces:
       Standard:
-        type: tosca.interfaces.node.lifecycle.Standard 
+        type: tosca.interfaces.node.lifecycle.Standard
         operations:
-          create:  
-            implementation:  
-              primary: playbooks/create_docker_host.yml   
-          delete:  
-            implementation:  
+          create:
+            inputs:
+              host_public_address:      { default: { get_attribute: [ SELF, host, public_address ] } }
+            implementation:
+              primary: playbooks/create_docker_host.yml
+          delete:
+            implementation:
               primary: playbooks/delete_docker_host.yml 
        
        

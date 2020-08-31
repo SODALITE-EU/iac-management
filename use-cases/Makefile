@@ -22,6 +22,12 @@ modak:
 	    --exclude=modules/* \
 	    modules clinical-uc/solver-modak/
 
+egi-modak:
+	rsync -av \
+	    --include=modules/hpc \
+	    --exclude=modules/* \
+	    modules clinical-uc/egi-hlrs-modak/
+
 vehicle:
 	rsync -av \
 	    --exclude=modules/{hpc,tests} \
@@ -31,6 +37,12 @@ snow:
 	rsync -av \
 	    --exclude=modules/{hpc,tests} \
 	    modules snow-uc/snow-demo/
+
+snow-training:
+	rsync -av \
+	    --include=modules/hpc \
+	    --exclude=modules/* \
+	    modules snow-uc/skyline-extractor/
 
 egi-demo:
 	rsync -av \
@@ -49,11 +61,17 @@ clean-data-mover:
 clean-modak:
 	rm -rf clinical-uc/solver-modak/modules
 
+clean-egi-modak:
+	rm -rf clinical-uc/egi-hlrs-modak/modules
+
 clean-vehicle:
 	rm -rf vehicleiot-uc/full-demo/modules
 
 clean-snow:
 	rm -rf snow-uc/snow-demo/modules
+
+clean-snow-training:
+	rm -rf snow-uc/skyline-extractor/modules
 
 clean-egi:
 	rm -rf egi/modules

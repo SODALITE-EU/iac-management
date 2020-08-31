@@ -1,0 +1,232 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - modules/hpc/torque/main.yml
+  - modules/hpc/image-puller/main.yml
+  - modules/hpc/modak/job/main.yml
+
+topology_template:
+
+  inputs:
+    hlrs-frontend-address:
+      type: string
+    hlrs-user:
+      type: string
+    hlrs-key-location:
+      type: string
+    hlrs-modak-job-script:
+      type: string           
+    egi-frontend-address:
+      type: string
+    egi-user:
+      type: string
+    egi-key-location:
+      type: string
+    egi-modak-job-script:
+      type: string 
+    modak-endpoint:
+      type: string
+
+  node_templates:
+
+### base nodes
+    hlrs-torque:
+      type: sodalite.nodes.hpc.wm.torque
+      attributes:
+        public_address: { get_input: hlrs-frontend-address }
+        username: { get_input: hlrs-user }
+        ssh-key: { get_input: hlrs-key-location }
+
+    egi-torque:
+      type: sodalite.nodes.hpc.wm.torque
+      attributes:
+        public_address: { get_input: egi-frontend-address }
+        username: { get_input: egi-user }
+        ssh-key: { get_input: egi-key-location }
+
+    modak-instance:
+      type: sodalite.nodes.modak
+      properties:
+        endpoint: { get_input: modak-endpoint }
+
+### modak job parameters for hlrs
+    mpi-test-modak-job-hlrs:
+      type: sodalite.nodes.modak.job
+      properties:
+
+        job_script: { get_input: hlrs-modak-job-script }
+
+        job_options:
+          job_name: "mpi_test_hlrs"
+          wall_time_limit: "1:00:00"
+          node_count: 2
+          core_count: 40
+          process_count_per_node: 40
+          standard_output_file: "mpi_test.out"
+          standard_error_file: "mpi_test.err"
+          combine_stdout_stderr: true
+          request_event_notification: "abe"
+          email_address: tokmakov@hlrs.de
+
+        application:
+          app_tag: "mpi_test"
+          container_runtime: "docker://ethcscs/mpich:ub1804_cuda101_mpi314_gnugprof"
+          app_type: "hpc"
+          executable: "./xthi"
+          arguments: ""
+          mpi_ranks: 80
+          threads: 2
+          build:
+            src: "https://raw.githubusercontent.com/olcf/XC30-Training/master/affinity/Xthi.c"
+            build_command: "mpicc -o xthi -fopenmp Xthi.c"
+
+        target:
+          name: "hlrs_testbed"
+          job_scheduler_type: "torque"
+
+        optimisation:
+          enable_opt_build: true
+          enable_autotuning: false
+          app_type: "hpc"
+          opt_build: 
+            cpu_type: "x86"
+            acc_type: ""
+          app_type-hpc: 
+            config:
+              parallelisation: "mpi"
+            data: {}
+            parallelisation-mpi: 
+              library: "mpich"
+              version: "3.1.4"
+
+      requirements:
+        - modak_endpoint: modak-instance
+        
+
+### modak job parameters for egi
+    mpi-test-modak-job-egi:
+      type: sodalite.nodes.modak.job
+      properties:
+
+        job_script: { get_input: egi-modak-job-script }
+
+        job_options:
+          job_name: "mpi_test_egi"
+          wall_time_limit: "1:00:00"
+          node_count: 4
+          process_count_per_node: 1
+          standard_output_file: "mpi_test.out"
+          standard_error_file: "mpi_test.err"
+          combine_stdout_stderr: true
+          request_event_notification: "abe"
+          email_address: tokmakov@hlrs.de
+
+        application:
+          app_tag: "mpi_test"
+          container_runtime: "docker://pottava/openmpi:1.10"
+          app_type: "hpc"
+          executable: "./xthi"
+          arguments: ""
+          mpi_ranks: 4
+          threads: 2
+          build:
+            src: "https://raw.githubusercontent.com/olcf/XC30-Training/master/affinity/Xthi.c"
+            build_command: "mpicc -o xthi -fopenmp Xthi.c"
+
+        target:
+          name: "egi"
+          job_scheduler_type: "torque"
+
+        optimisation:
+          enable_opt_build: true
+          enable_autotuning: false
+          app_type: "hpc"
+          opt_build: 
+            cpu_type: "x86"
+            acc_type: ""
+          app_type-hpc: 
+            config:
+              parallelisation: "mpi"
+            data: {}
+            parallelisation-mpi: 
+              library: "openmpi"
+              version: "1.10"
+
+      requirements:
+        - modak_endpoint: modak-instance
+        
+
+### image pulling
+    mpi-test-image-hlrs:
+      type: sodalite.image_puller.singularity
+      properties:
+        image: { get_attribute: [SELF, dependency, container_runtime] }
+        registry: "docker"
+        images_location: /mnt/nfs/home/kamil/singularity_images
+      requirements:
+        - host: hlrs-torque
+        - dependency: mpi-test-modak-job-hlrs
+
+    mpi-test-image-egi:
+      type: sodalite.image_puller.singularity
+      properties:
+        image: { get_attribute: [SELF, dependency, container_runtime] }
+        registry: "docker"
+        images_location: /home/kamil/singularity_images
+      requirements:
+        - host: egi-torque
+        - dependency: mpi-test-modak-job-egi
+
+### job configs
+    mpi-test-job-config-hlrs:
+      type: sodalite.nodes.hpc.job.torque.preconfigured
+      properties:
+        name: mpi-test
+        script: { get_input: hlrs-modak-job-script }
+        workspace: ~/workflow-mpi-test-hlrs
+        enable_audit: true
+        env:
+          SINGULARITY_DIR: /mnt/nfs/home/kamil/singularity_images
+      requirements:
+        - host: hlrs-torque
+        - dependency: mpi-test-image-hlrs
+
+    mpi-test-job-config-egi:
+      type: sodalite.nodes.hpc.job.torque.preconfigured
+      properties:
+        name: mpi-test
+        script: { get_input: egi-modak-job-script }
+        workspace: ~/workflow-mpi-test-egi
+        enable_audit: true
+        env:
+          SINGULARITY_DIR: /home/kamil/singularity_images
+      requirements:
+        - host: egi-torque
+        - dependency: mpi-test-image-egi
+
+### job workflow
+    mpi-test-job-hlrs:
+      type: sodalite.nodes.hpc.job.torque
+      requirements:
+        - host: hlrs-torque
+        - configured_job: mpi-test-job-config-hlrs
+
+    mpi-test-job-egi:
+      type: sodalite.nodes.hpc.job.torque
+      requirements:
+        - host: egi-torque
+        - configured_job: mpi-test-job-config-egi
+        - dependency: mpi-test-job-result-hlrs
+
+### job result
+    mpi-test-job-result-hlrs:
+      type: sodalite.nodes.hpc.job.torque.result
+      requirements:
+        - host: hlrs-torque
+        - job: mpi-test-job-hlrs
+
+    mpi-test-job-result-egi:
+      type: sodalite.nodes.hpc.job.torque.result
+      requirements:
+        - host: egi-torque
+        - job: mpi-test-job-egi

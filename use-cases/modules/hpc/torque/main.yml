@@ -238,6 +238,10 @@ node_types:
         type: string
       job_name:
         type: string
+      job_workspace:
+        type: string
+      job_enable_audit:
+        type: boolean
     interfaces:
       Standard:
         type: tosca.interfaces.node.lifecycle.Standard
@@ -257,6 +261,7 @@ node_types:
               job_name: { default: { get_property: [SELF, configured_job, name] } }
               job_workspace: { default: { get_property: [SELF, configured_job, workspace] } }
               job_env: { default: { get_property: [SELF, configured_job, env] } }
+              job_enable_audit: { default: { get_property: [SELF, configured_job, enable_audit] } }
             implementation: torque-job/playbooks/start.yml
     capabilities:
       job:
@@ -304,12 +309,12 @@ node_types:
               wm_keypath: { default: { get_attribute: [SELF, host, ssh-key] } }
               job_id: { type: string, default: { get_attribute: [SELF, job, job_id] } }
               job_name: { default: { get_attribute: [SELF, job, job_name] } }
-              job_workspace: { default: { get_property: [SELF, job, configured_job, workspace] } }
+              job_workspace: { default: { get_attribute: [SELF, job, job_workspace] } }
               job_walltime: { default: { get_attribute: [SELF, job, job_walltime] } }
               #job_walltime: { default: { get_property: [SELF, job, configured_job, walltime] } }
               job_monitor_period: { default: { get_property: [SELF, monitor_period] } }
               job_monitor_retries_headroom: { default: { get_property: [SELF, monitor_retries_headroom] } }
-              job_enable_audit: { default: { get_property: [SELF, job, configured_job, enable_audit] } }
+              job_enable_audit: { default: { get_attribute: [SELF, job, job_enable_audit] } }
             implementation: torque-job/playbooks/check.yml      
 
 relationship_types:

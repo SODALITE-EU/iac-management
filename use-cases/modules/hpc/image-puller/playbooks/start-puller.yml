@@ -61,9 +61,11 @@
             singularity pull \
               --dir {{ images_location }} \
               {{ output }} \
-              {{ registry }}://{{ image }}
+              {{ image_path }}
           register: pull_status 
           ignore_errors: yes
+          vars:
+            image_path: "{{ image if image is search('(docker|library|shub)://') else registry + '://' + image }}"
         
         # ignoring only "Image file already exists" error
         - fail:

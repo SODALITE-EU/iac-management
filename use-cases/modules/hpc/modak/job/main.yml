@@ -47,6 +47,8 @@ node_types:
     attributes:
       artifact_url:
         type: string
+      container_runtime:
+        type: string
     requirements:
       - modak_endpoint:
           node: sodalite.nodes.modak
