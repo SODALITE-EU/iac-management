@@ -36,10 +36,14 @@
     - set_fact:
         artifact_url: "{{ response.json.job.job_script }}"
 
+    - set_fact:
+        container_runtime: "{{ response.json.job.application.container_runtime if response.json.job.application.container_runtime is defined else '' }}"
+
     - name: Set artifact url
       set_stats:
         data:
           artifact_url: "{{ artifact_url }}"
+          container_runtime: "{{ container_runtime }}"
 
     - name: Save job
       get_url:

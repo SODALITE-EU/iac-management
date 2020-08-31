@@ -49,26 +49,6 @@ topology_template:
       properties:
         endpoint: { get_input: modak-endpoint }
 
-### image pulling
-    mpi-test-image-hlrs:
-      type: sodalite.image_puller.singularity
-      properties:
-        image: "ethcscs/mpich:ub1804_cuda101_mpi314_gnugprof"
-        registry: "docker"
-        images_location: /mnt/nfs/home/kamil/singularity_images
-      requirements:
-        - host: hlrs-torque
-
-    mpi-test-image-egi:
-      type: sodalite.image_puller.singularity
-      properties:
-        image: "pottava/openmpi:1.10"
-        registry: "docker"
-        images_location: /home/kamil/singularity_images
-      requirements:
-        - host: egi-torque
-
-
 ### modak job parameters for hlrs
     mpi-test-modak-job-hlrs:
       type: sodalite.nodes.modak.job
@@ -121,7 +101,7 @@ topology_template:
 
       requirements:
         - modak_endpoint: modak-instance
-        - dependency: mpi-test-image-hlrs
+        
 
 ### modak job parameters for egi
     mpi-test-modak-job-egi:
@@ -174,7 +154,28 @@ topology_template:
 
       requirements:
         - modak_endpoint: modak-instance
-        - dependency: mpi-test-image-egi
+        
+
+### image pulling
+    mpi-test-image-hlrs:
+      type: sodalite.image_puller.singularity
+      properties:
+        image: { get_attribute: [SELF, dependency, container_runtime] }
+        registry: "docker"
+        images_location: /mnt/nfs/home/kamil/singularity_images
+      requirements:
+        - host: hlrs-torque
+        - dependency: mpi-test-modak-job-hlrs
+
+    mpi-test-image-egi:
+      type: sodalite.image_puller.singularity
+      properties:
+        image: { get_attribute: [SELF, dependency, container_runtime] }
+        registry: "docker"
+        images_location: /home/kamil/singularity_images
+      requirements:
+        - host: egi-torque
+        - dependency: mpi-test-modak-job-egi
 
 ### job configs
     mpi-test-job-config-hlrs:
@@ -188,7 +189,7 @@ topology_template:
           SINGULARITY_DIR: /mnt/nfs/home/kamil/singularity_images
       requirements:
         - host: hlrs-torque
-        - dependency: mpi-test-modak-job-hlrs
+        - dependency: mpi-test-image-hlrs
 
     mpi-test-job-config-egi:
       type: sodalite.nodes.hpc.job.torque.preconfigured
@@ -201,7 +202,7 @@ topology_template:
           SINGULARITY_DIR: /home/kamil/singularity_images
       requirements:
         - host: egi-torque
-        - dependency: mpi-test-modak-job-egi
+        - dependency: mpi-test-image-egi
 
 ### job workflow
     mpi-test-job-hlrs:
