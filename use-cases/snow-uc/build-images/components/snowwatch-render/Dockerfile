@@ -3,8 +3,8 @@ FROM ubuntu
 ARG DEBIAN_FRONTEND=noninteractive
     
 COPY /Snowwatch-Render/ SnowWatch-SODALITE/Snowwatch-Render/
+COPY /config.json SnowWatch-SODALITE/
 
-RUN cd SnowWatch-SODALITE/Snowwatch-Render/node-server
 
 #Install Nodejs
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
@@ -22,5 +22,11 @@ RUN source $NVM_DIR/nvm.sh \
     && nvm use default && \
     apt-get -y install npm
 
-RUN npm install --production && \
-    npm start
+
+WORKDIR /SnowWatch-SODALITE/Snowwatch-Render/node-server
+
+EXPOSE 3000
+
+RUN npm install --production
+RUN npm i -g pm2 
+RUN npm start
