@@ -1,0 +1,5 @@
+ssh-key-name: [KEY NAME OF THE XOPERA REST API DEPLOYMENT]
+image-name: "centos-7 x86_64"
+openstack-network-name: xlab
+security-groups: default,remote_access,sodalite-website
+flavor-name: m1.medium
