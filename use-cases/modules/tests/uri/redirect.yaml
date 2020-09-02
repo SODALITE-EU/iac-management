@@ -25,6 +25,7 @@
           removes:          "{{ removes|default(omit, true) }}"
           return_content:   yes
           src:              "{{ src|default(omit, true) }}"
+          validate_certs:   "{{ validate_certs|default(omit, true) }}"
           status_code:      "{{ status_code|default(omit, true) }}"
           creates:          "{{ creates|default(omit, true) }}"
           dest:             "{{ dest|default(omit, true) }}"

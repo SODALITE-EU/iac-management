@@ -10,6 +10,21 @@ node_types:
       checked_against:
         type: string
         description: Serves as a return value of the data that the test is testing
+    capabilities:
+      input_component:
+        type: tosca.capabilities.Node
+        valid_source_types: ['tosca.nodes.SoftwareComponent']
+    requirements:
+      - input_component:
+          capability: tosca.capabilities.Node
+          node: tosca.nodes.SoftwareComponent
+          relationship: tosca.relationships.DependsOn
+          occurrences: [ 0, UNBOUNDED ]
+      - input_component_2:
+          capability: tosca.capabilities.Node
+          node: tosca.nodes.SoftwareComponent
+          relationship: tosca.relationships.DependsOn
+          occurrences: [ 0, UNBOUNDED ]
 
   sodalite.nodes.Tests.Text:
     derived_from: sodalite.nodes.Tests
@@ -136,6 +151,12 @@ node_types:
         type: string
         default: null
         required: false
+      validate_certs:
+        type: string
+        required: false
+        constraints:
+          - valid_values: [ yes, no ]
+        default: no
       timeout:
         type: string
         default: null
@@ -168,6 +189,7 @@ node_types:
               remote_src:         { default: { get_property: [ SELF, remote_src ] } }
               removes:            { default: { get_property: [ SELF, removes ] } }
               src:                { default: { get_property: [ SELF, src ] } }
+              validate_certs:     { default: { get_property: [ SELF, validate_certs ] } }
               creates:            { default: null }
               dest:               { default: null }
               status_code:        { default: { get_property: [ SELF, status_code ] } }
@@ -204,6 +226,7 @@ node_types:
               remote_src:         { default: { get_property: [ SELF, remote_src ] } }
               removes:            { default: { get_property: [ SELF, removes ] } }
               src:                { default: { get_property: [ SELF, src ] } }
+              validate_certs:     { default: { get_property: [ SELF, validate_certs ] } }
               creates:            { default: null }
               dest:               { default: null }
               status_code:        { default: { get_property: [ SELF, status_code ] } }
@@ -212,6 +235,56 @@ node_types:
               regex:              { default: { get_property: [ SELF, regex ] } }
             implementation:
               primary: uri/download_body.yaml
+
+  sodalite.nodes.Tests.Text.URI.Download.Keep:
+    derived_from: sodalite.nodes.Tests.Text.URI.Download
+    description: |-
+      URI test node that checks whether the response content equals/matches regex of the provided string.
+      All parameter descriptions can be found at https://docs.ansible.com/ansible/latest/modules/uri_module.html.
+      This node keeps the downloaded file in the folder specified in the properties section.
+    properties:
+      download_directory:
+        type: string
+        description: Directory where the files are kept stored.
+        default: "tmp/soda_tests"
+      filename:
+        type: string
+        default: ""
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        operations:
+          create:
+            inputs:
+              download_directory: { default: { get_property: [ SELF, download_directory ] } }
+              filename:           { default: { get_property: [ SELF, filename ] } }
+              url:                { default: { get_property: [ SELF, url ] } }
+              attributes:         { default: { get_property: [ SELF, attributes ] } }
+              body:               { default: { get_property: [ SELF, body ] } }
+              body_format:        { default: { get_property: [ SELF, body_format ] } }
+              method:             { default: { get_property: [ SELF, method ] } }
+              client_cert:        { default: { get_property: [ SELF, client_cert ] } }
+              client_key:         { default: { get_property: [ SELF, client_key ] } }
+              follow_redirects:   { default: { get_property: [ SELF, follow_redirects ] } }
+              force:              { default: { get_property: [ SELF, force ] } }
+              force_basic_auth:   { default: { get_property: [ SELF, force_basic_auth ] } }
+              group:              { default: { get_property: [ SELF, group ] } }
+              headers:            { default: { get_property: [ SELF, headers ] } }
+              http_agent:         { default: { get_property: [ SELF, http_agent ] } }
+              mode:               { default: { get_property: [ SELF, mode ] } }
+              owner:              { default: { get_property: [ SELF, owner ] } }
+              remote_src:         { default: { get_property: [ SELF, remote_src ] } }
+              removes:            { default: { get_property: [ SELF, removes ] } }
+              src:                { default: { get_property: [ SELF, src ] } }
+              validate_certs:     { default: { get_property: [ SELF, validate_certs ] } }
+              creates:            { default: null }
+              dest:               { default: null }
+              status_code:        { default: { get_property: [ SELF, status_code ] } }
+              timeout:            { default: { get_property: [ SELF, timeout ] } }
+              comparable_string:  { default: { get_property: [ SELF, comparable_string ] } }
+              regex:              { default: { get_property: [ SELF, regex ] } }
+            implementation:
+              primary: uri/download_body_keep.yaml
 
   sodalite.nodes.Tests.Text.URI.Redirect:
     derived_from: sodalite.nodes.Tests.Text.URI
@@ -240,6 +313,7 @@ node_types:
               remote_src:         { default: { get_property: [ SELF, remote_src ] } }
               removes:            { default: { get_property: [ SELF, removes ] } }
               src:                { default: { get_property: [ SELF, src ] } }
+              validate_certs:     { default: { get_property: [ SELF, validate_certs ] } }
               creates:            { default: null }
               dest:               { default: null }
               status_code:        { default: { get_property: [ SELF, status_code ] } }
@@ -252,6 +326,16 @@ node_types:
   sodalite.nodes.Tests.Text.URI.Response:
     derived_from: sodalite.nodes.Tests.Text.URI
     description: URI test node that checks whether the redirect URL equals/matches regex of the provided string. All parameter descriptions can be found at https://docs.ansible.com/ansible/latest/modules/uri_module.html
+    properties:
+      wait_for_code:
+        type: boolean
+        default: false
+      max_retries:
+        type: integer
+        default: 5
+      retry_delay:
+        type: integer
+        default: 10
     interfaces:
       Standard:
         type: tosca.interfaces.node.lifecycle.Standard
@@ -276,12 +360,16 @@ node_types:
               remote_src:         { default: { get_property: [ SELF, remote_src ] } }
               removes:            { default: { get_property: [ SELF, removes ] } }
               src:                { default: { get_property: [ SELF, src ] } }
+              validate_certs:     { default: { get_property: [ SELF, validate_certs ] } }
               creates:            { default: null }
               dest:               { default: null }
               status_code:        { default: { get_property: [ SELF, status_code ] } }
               timeout:            { default: { get_property: [ SELF, timeout ] } }
               comparable_string:  { default: { get_property: [ SELF, comparable_string ] } }
               regex:              { default: { get_property: [ SELF, regex ] } }
+              wait_for_code:      { default: { get_property: [ SELF, wait_for_code ] } }
+              max_retries:        { default: { get_property: [ SELF, max_retries ] } }
+              retry_delay:        { default: { get_property: [ SELF, retry_delay ] } }
             implementation:
               primary: uri/response_code.yaml
 
