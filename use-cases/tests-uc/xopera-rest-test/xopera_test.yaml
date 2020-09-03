@@ -184,13 +184,12 @@ topology_template:
         url:                { get_attribute: [ SELF, input_component, output ] }
         comparable_string:  201
         method:             GET
-        regex:              true
         wait_for_code:      true
         status_code:
           - 201
         timeout:            120
-        max_retries:        40
-        retry_delay:      20
+        max_retries:        30
+        retry_delay:      4
       requirements:
         - input_component: concat-status-url
 
@@ -205,20 +204,42 @@ topology_template:
         status_code: 202
       requirements:
         - input_component: concat-deploy-url
+        - dependency: xopera-rest-deploy-status-csar-test
+
+    ## GET SESSION TOKEN FROM THE CSAR UNDEPLOYMENT
+    filter-status-url-undeploy:
+      type: sodalite.nodes.Utils.extract.JSON
+      properties:
+        input:  { get_attribute: [ SELF, input_component, checked_against ] }
+        key:        session_token
+      requirements:
+        - input_component: xopera-rest-undeploy-csar-test
+
+    ## CONCAT URL USED TO TEST THE DEPLOYMENT'S STATUS
+    concat-status-url-undeploy:
+      type: sodalite.nodes.Utils.concat
+      properties:
+        preprefix:  { get_input: xopera-rest-address }
+        prefix:     'info/status?format=long&token='
+        input:      { get_attribute: [ SELF, input_component, output ] }
+      requirements:
+        - input_component: filter-status-url-undeploy
 
     ## TEST UNDEPLOYMENT STATUS
     xopera-rest-undeploy-status-csar-test:
       type: sodalite.nodes.Tests.Text.URI.Response
       properties:
         url:                { get_attribute: [ SELF, input_component, output ] }
-        comparable_string:  "20[12]"
+        comparable_string:   201
         method:             GET
-        regex:              true
         wait_for_code:      true
         status_code:
           - 201
+        timeout:            120
+        max_retries:        30
+        retry_delay:      4
       requirements:
-        - input_component: concat-status-url
+        - input_component: concat-status-url-undeploy
 
     ## CONCAT THE URL USED FOR CSAR DELETION
     concat-delete-url:
@@ -229,6 +250,7 @@ topology_template:
         input:      { get_attribute: [ SELF, input_component, output ] }
       requirements:
         - input_component: filter-update-url
+        - dependency: xopera-rest-undeploy-status-csar-test
 
     ## DELETE THE CSAR
     xopera-rest-delete-csar-test:
