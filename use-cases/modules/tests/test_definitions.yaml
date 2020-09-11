@@ -243,6 +243,15 @@ node_types:
       All parameter descriptions can be found at https://docs.ansible.com/ansible/latest/modules/uri_module.html.
       This node keeps the downloaded file in the folder specified in the properties section.
     properties:
+      wait_for_code:
+        type: boolean
+        default: false
+      max_retries:
+        type: integer
+        default: 5
+      retry_delay:
+        type: integer
+        default: 10
       download_directory:
         type: string
         description: Directory where the files are kept stored.
@@ -283,6 +292,9 @@ node_types:
               timeout:            { default: { get_property: [ SELF, timeout ] } }
               comparable_string:  { default: { get_property: [ SELF, comparable_string ] } }
               regex:              { default: { get_property: [ SELF, regex ] } }
+              wait_for_code:      { default: { get_property: [ SELF, wait_for_code ] } }
+              max_retries:        { default: { get_property: [ SELF, max_retries ] } }
+              retry_delay:        { default: { get_property: [ SELF, retry_delay ] } }
             implementation:
               primary: uri/download_body_keep.yaml
 

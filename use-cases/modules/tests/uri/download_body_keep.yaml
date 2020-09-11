@@ -36,6 +36,9 @@
           dest:             "{{ (download_directory + filename)|default(omit, true) }}"
           timeout:          "{{ timeout|default(omit, true) }}"
         register: request_result
+        until: "((request_result.status|string) in (status_code|string)) or not wait_for_code"
+        retries: "{{ max_retries }}"
+        delay: "{{ retry_delay }}"
 
       - name: Read the file
         shell: cat {{ request_result.path }}

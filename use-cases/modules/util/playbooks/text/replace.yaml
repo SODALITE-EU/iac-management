@@ -1,0 +1,8 @@
+---
+- hosts: all
+
+  tasks:
+    - name: Evaluate the expression
+      set_stats:
+        data:
+          output: "{{ input | replace(to_replace, replacement) }}"
