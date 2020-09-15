@@ -1,17 +1,11 @@
 tosca_definitions_version: tosca_simple_yaml_1_3
 
 imports:
+  - modules/vm/types.yaml
   - modules/site/types.yaml
   - modules/docker/docker_registry.yaml
   - modules/docker/docker_component.yaml
 
-node_types:
-
-  sodalite.nodes.Compute:
-    derived_from: tosca.nodes.Compute
-    properties: 
-      username:
-        type: string
 
 topology_template:
 
@@ -26,9 +20,7 @@ topology_template:
       type: sodalite.nodes.Compute
       properties:
         username:  { get_input: username } 
-      attributes:
-        private_address:   { get_input: docker-host-ip } 
-        public_address:  { get_input: docker-host-ip } 
+        docker_ip: { get_input: docker-host-ip } 
         
     docker-public-registry:
       type: sodalite.nodes.DockerRegistry
@@ -54,7 +46,8 @@ topology_template:
         alias: nginx-sodalite-test
       requirements:
         - host:  sodalite-vm
-        - registry: docker-public-registry         
+        - registry: docker-public-registry   
+        - dependency: site      
 
 
 

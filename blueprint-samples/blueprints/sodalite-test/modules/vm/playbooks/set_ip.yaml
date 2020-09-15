@@ -1,0 +1,8 @@
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: Set attributes
+      set_stats:
+        data:
+          private_address: "{{ docker_ip }}"
+          public_address: "{{ docker_ip }}"
