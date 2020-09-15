@@ -3,12 +3,12 @@ tosca_definitions_version: tosca_simple_yaml_1_3
 imports:
   - output_hpc.yaml
 
-capability_types:
-  sodalite.capabilities.hpc.ConfiguredJob:
-    derived_from: tosca.capabilities.Root
+# capability_types:
+#   sodalite.capabilities.hpc.ConfiguredJob:
+#     derived_from: tosca.capabilities.Root
 
-  sodalite.capabilities.hpc.StartedJob:
-    derived_from: tosca.capabilities.Root
+#   sodalite.capabilities.hpc.StartedJob:
+#     derived_from: tosca.capabilities.Root
     
 node_types:
 
@@ -48,7 +48,8 @@ node_types:
         type: string
     capabilities:
       configured_job:
-        type: sodalite.capabilities.hpc.ConfiguredJob
+        # type: sodalite.capabilities.hpc.ConfiguredJob
+        type: tosca.capabilities.Root
         valid_source_types: [sodalite.nodes.hpc.job.torque]
 
   sodalite.nodes.hpc.job.torque.configuration: 
@@ -229,7 +230,8 @@ node_types:
           relationship: sodalite.relationships.jobHostedOn
       - configured_job:
           node: sodalite.nodes.hpc.job.torque.configuration.base
-          capability: sodalite.capabilities.hpc.ConfiguredJob 
+          # capability: sodalite.capabilities.hpc.ConfiguredJob 
+          capability: tosca.capabilities.Root
           relationship: tosca.relationships.DependsOn    
     attributes:
       job_id:
@@ -265,7 +267,8 @@ node_types:
             implementation: torque-job/playbooks/start.yml
     capabilities:
       job:
-        type: sodalite.capabilities.hpc.StartedJob
+        # type: sodalite.capabilities.hpc.StartedJob
+        type: tosca.capabilities.Root
         valid_source_types: [sodalite.nodes.hpc.job.torque.result]            
 
   sodalite.nodes.hpc.job.torque.result: 
@@ -279,7 +282,8 @@ node_types:
           relationship: tosca.relationships.HostedOn
       - job:
           node: sodalite.nodes.hpc.job.torque
-          capability: sodalite.capabilities.hpc.StartedJob 
+          # capability: sodalite.capabilities.hpc.StartedJob 
+          capability: tosca.capabilities.Root
           relationship: tosca.relationships.DependsOn   
     properties:
       monitor_period:

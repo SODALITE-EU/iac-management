@@ -1,9 +1,9 @@
 tosca_definitions_version: tosca_simple_yaml_1_3
 
-capability_types:
+# capability_types:
 
-  sodalite.capabilities.data.mover.GridFTPClient:
-    derived_from: tosca.capabilities.Root
+#   sodalite.capabilities.data.mover.GridFTPClient:
+#     derived_from: tosca.capabilities.Root
 
 node_types:
 
@@ -86,7 +86,8 @@ node_types:
     derived_from: tosca.nodes.SoftwareComponent
     capabilities:
       client:
-        type: sodalite.capabilities.data.mover.GridFTPClient
+        # type: sodalite.capabilities.data.mover.GridFTPClient
+        type: tosca.capabilities.Root
         valid_source_types: [ sodalite.data.mover.gridftp ]
     properties:
       cert_path:
@@ -184,7 +185,8 @@ node_types:
     requirements:
       - client:
           node: sodalite.data.mover.gridftp-client
-          capability: sodalite.capabilities.data.mover.GridFTPClient
+          # capability: sodalite.capabilities.data.mover.GridFTPClient
+          capability: tosca.capabilities.Root
           relationship: tosca.relationships.DependsOn
     interfaces:
       Standard:
