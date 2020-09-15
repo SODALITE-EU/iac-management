@@ -227,7 +227,8 @@ node_types:
       - host:
           node: sodalite.nodes.hpc.wm.torque
           capability: tosca.capabilities.Compute
-          relationship: sodalite.relationships.jobHostedOn
+          # relationship: sodalite.relationships.jobHostedOn
+          relationship: tosca.relationships.HostedOn
       - configured_job:
           node: sodalite.nodes.hpc.job.torque.configuration.base
           # capability: sodalite.capabilities.hpc.ConfiguredJob 
@@ -321,20 +322,20 @@ node_types:
               job_enable_audit: { default: { get_attribute: [SELF, job, job_enable_audit] } }
             implementation: torque-job/playbooks/check.yml      
 
-relationship_types:
+# relationship_types:
 
-  sodalite.relationships.jobHostedOn: # currently does nothing
-    derived_from: tosca.relationships.HostedOn
-    interfaces:
-      Configure:
-        operations:
-          add_source:
-            inputs:
-              # attribute "public_address" is internal to get a host, but we need to fetch it in playbooks
-              wm_public_address: { default: { get_attribute: [SELF, host, public_address] } }
-              wm_username: { default: { get_attribute: [SELF, host, username] } }
-              wm_keypath: { default: { get_attribute: [SELF, host, ssh-key] } }
-              # Conditionals or default values will help to get rid of properties that are not used in playbooks
-              job_name: { default: { get_property: [SELF, name] } }
-            implementation:
-              primary: torque-job/playbooks/dummy-relation-interface.yml
+#   sodalite.relationships.jobHostedOn: # currently does nothing
+#     derived_from: tosca.relationships.HostedOn
+#     interfaces:
+#       Configure:
+#         operations:
+#           add_source:
+#             inputs:
+#               # attribute "public_address" is internal to get a host, but we need to fetch it in playbooks
+#               wm_public_address: { default: { get_attribute: [SELF, host, public_address] } }
+#               wm_username: { default: { get_attribute: [SELF, host, username] } }
+#               wm_keypath: { default: { get_attribute: [SELF, host, ssh-key] } }
+#               # Conditionals or default values will help to get rid of properties that are not used in playbooks
+#               job_name: { default: { get_property: [SELF, name] } }
+#             implementation:
+#               primary: torque-job/playbooks/dummy-relation-interface.yml
