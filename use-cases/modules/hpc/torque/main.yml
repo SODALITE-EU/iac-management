@@ -307,7 +307,7 @@ node_types:
               wm_public_address: { default: { get_attribute: [SELF, host, public_address] } }
               wm_username: { default: { get_attribute: [SELF, host, username] } }
               wm_keypath: { default: { get_attribute: [SELF, host, ssh-key] } }
-              job_id: { type: string, default: { get_attribute: [SELF, job, job_id] } }
+              job_id: { default: { get_attribute: [SELF, job, job_id] } }
               job_name: { default: { get_attribute: [SELF, job, job_name] } }
               job_workspace: { default: { get_attribute: [SELF, job, job_workspace] } }
               job_walltime: { default: { get_attribute: [SELF, job, job_walltime] } }
