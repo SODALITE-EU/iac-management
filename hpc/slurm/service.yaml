@@ -1,0 +1,54 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - modules/hpc/slurm/main_hpc.yml
+
+
+topology_template:
+
+  inputs:
+    frontend-address:
+      type: string
+    user:
+      type: string
+    key-location:
+      type: string
+    email:
+      type: string
+              
+
+  node_templates:
+
+  #HPC
+    hpc-wm-slurm:
+      type: sodalite.nodes.hpc.wm.slurm
+      attributes:
+        public_address: { get_input: frontend-address }
+        username: { get_input: user }
+        ssh-key: { get_input: key-location }
+
+    hpc-job-slurm-config:
+      type: sodalite.nodes.hpc.job.slurm.configuration
+      properties:
+        name: hpc-test-1
+        script: job.sh 
+        workspace: ~
+        ppn: 1
+        walltime: 00:10:00
+        email: { get_input: email }
+        enable_audit: true
+      requirements:
+        - host: hpc-wm-slurm
+
+    hpc-job-slurm:
+      type: sodalite.nodes.hpc.job.slurm
+      requirements:
+        - host: hpc-wm-slurm 
+        - configured_job: hpc-job-slurm-config           
+#Result        
+    hpc-job-slurm-result:
+      type: sodalite.nodes.hpc.job.slurm.result
+      requirements:
+        - host: hpc-wm-slurm
+        - job: hpc-job-slurm         
+               
