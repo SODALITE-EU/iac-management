@@ -1,0 +1,10 @@
+vpc-id: vpc-e090398b  
+region: us-east-2
+vpc-subnet-id: subnet-256e1869
+ssh-key-name: alexander_maslennikov
+image-name: ami-07efac79022b86107
+security-groups: [ default, launch-wizard-1, aws_test ] 
+flavor-name: t2.micro
+aws-access-key: 
+aws-secret-key: 
+username: ubuntu
