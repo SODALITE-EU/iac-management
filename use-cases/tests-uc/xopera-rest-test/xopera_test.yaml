@@ -50,46 +50,26 @@ topology_template:
         url: { get_input: xopera-rest-address }
         regex: true
 
-    ## CONCAT URL FOR Key Test
-    concat-key-pair-url:
-      type: sodalite.nodes.Utils.concat
-      properties:
-        input: { get_input: xopera-rest-address }
-        suffix: "ssh/keys/public"
-
     ## TEST KEY PAIR ENDPOINT
     xopera-rest-public-key-test:
       type: sodalite.nodes.Tests.Text.URI
       properties:
-        url:                { get_attribute: [ SELF, input_component, output ] }
+        url: { concat: [ get_input: xopera-rest-address, "ssh/keys/public" ] }
         comparable_string:  '.*"key_pair_name": .*"public_key": .*'
         regex:              true
-      requirements:
-        - input_component: concat-key-pair-url
-
-    ## CONCAT URL FOR THE UPDATE REQUEST
-    concat-add-url:
-      type: sodalite.nodes.Utils.concat
-      properties:
-        prefix: >-
-          curl
-          -X POST "
-        input:  { get_input: xopera-rest-address }
-        suffix: >-
-          manage"
-          -H  "accept: application/json"
-          -H  "Content-Type: multipart/form-data"
-          -F "CSAR=@CSAR-sodalite.zip;type=application/zip"
 
     ## ADD A BASE REVISION OF THE TEST REPLOYMENT (the CSAR has to be located in artifacts/ and named CSAR-sodalite.zip)
     xopera-rest-add-csar-test:
       type: sodalite.nodes.Tests.Text.Command.CSAR
       properties:
-        command:            { get_attribute: [ SELF, input_component, output ] }
+        command: { concat: [ 'curl -X POST ',
+                            { get_input: xopera-rest-address },
+                             'manage ',
+                             '-H "accept: application/json" ',
+                             '-H  "Content-Type: multipart/form-data" ',
+                             '-F "CSAR=@CSAR-sodalite.zip;type=application/zip" ' ] }
         comparable_string:  '.*Revision saved*'
         regex:              true
-      requirements:
-        - input_component: concat-add-url
 
     ## GET BLUEPRINT TOKEN FROM THE PREVIOUS NODE
     filter-update-url:
@@ -100,61 +80,40 @@ topology_template:
       requirements:
         - input_component: xopera-rest-add-csar-test
 
-    ## CONCAT URL FOR THE UPDATE REQUEST
-    concat-update-url:
-      type: sodalite.nodes.Utils.concat
-      properties:
-        prepreprefix:   'curl -X POST "'
-        preprefix:      { get_input: xopera-rest-address }
-        prefix:         'manage/'
-        input:          { get_attribute: [ SELF, input_component, output ] }
-        suffix:         '" -H  "accept: application/json" -H "Content-Type: multipart/form-data" -F "CSAR=@CSAR-sodalite.zip;type=application/zip"'
-      requirements:
-        - input_component: filter-update-url
-
     ## TEST UPDATING OF THE REMOTE CSAR
     xopera-rest-modify-csar-test:
       type: sodalite.nodes.Tests.Text.Command.CSAR
       properties:
-        command:            { get_attribute: [ SELF, input_component, output ] }
+        command: { concat: ['curl -X POST ',
+                            get_input: xopera-rest-address,
+                            'manage/',
+                            get_attribute: [ filter-update-url, output ],
+                            ' -H  "accept: application/json"',
+                            ' -H "Content-Type: multipart/form-data"',
+                            ' -F "CSAR=@CSAR-sodalite.zip;type=application/zip"' ] }
         comparable_string:  '.*Revision saved*'
         regex:              true
       requirements:
-        - input_component: concat-update-url
-
-    ## CONCAT URL FOR CSAR DEPLOYMENT
-    concat-deploy-url:
-      type: sodalite.nodes.Utils.concat
-      properties:
-        preprefix:  { get_input: xopera-rest-address }
-        prefix:     'deploy/'
-        input:      { get_attribute: [ SELF, input_component, output ] }
-      requirements:
-        - input_component: filter-update-url
+        - dependency: filter-update-url
 
     ###################################################################
-
-    ## CONCAT URL FOR THE DEPLOYMENT REQUEST
-    concat-deploy-curl:
-      type: sodalite.nodes.Utils.concat
-      properties:
-        prefix: >-
-          curl -X POST "
-        input:  { get_attribute: [ SELF, input_component, output ] }
-        suffix: >-
-          " -H  "accept: application/json" -H  "Content-Type: multipart/form-data" -F "inputs_file=@input-sodalite.yaml;type=application/x-yaml"
-      requirements:
-        - input_component: concat-deploy-url
 
     ## DEPLOY CSAR WITH INPUTS
     xopera-rest-deploy-csar-test:
       type: sodalite.nodes.Tests.Text.Command.CSAR
       properties:
-        command:            { get_attribute: [ SELF, input_component, output ] }
+        command: { concat: [ 'curl -X POST ',
+                             get_input: xopera-rest-address,
+                             'deploy/',
+                             { get_attribute: [ filter-update-url, output ] },
+                             ' -H  "accept: application/json"',
+                             ' -H "Content-Type: multipart/form-data"',
+                             ' -F "inputs_file=@input-sodalite.yaml;type=application/x-yaml"'
+        ]}
         comparable_string:  '.*Deploy job started*'
         regex:              true
       requirements:
-        - input_component: concat-deploy-curl
+        - dependency: filter-update-url
 
     ###################################################################
 
@@ -167,21 +126,13 @@ topology_template:
       requirements:
         - input_component: xopera-rest-deploy-csar-test
 
-    ## CONCAT URL USED TO TEST THE DEPLOYMENT'S STATUS
-    concat-status-url:
-      type: sodalite.nodes.Utils.concat
-      properties:
-        preprefix:  { get_input: xopera-rest-address }
-        prefix:     'info/status?format=long&token='
-        input:      { get_attribute: [ SELF, input_component, output ] }
-      requirements:
-        - input_component: filter-status-url
-
     ## TEST DEPLOYMENT'S STATUS AND WAIT TILL SUCCESS/FAILURE
     xopera-rest-deploy-status-csar-test:
       type: sodalite.nodes.Tests.Text.URI.Response
       properties:
-        url:                { get_attribute: [ SELF, input_component, output ] }
+        url: { concat: [ get_input: xopera-rest-address,
+                         'info/status?format=long&token=',
+                         get_attribute: [ filter-status-url, output ] ] }
         comparable_string:  201
         method:             GET
         wait_for_code:      true
@@ -191,19 +142,21 @@ topology_template:
         max_retries:        30
         retry_delay:      4
       requirements:
-        - input_component: concat-status-url
+        - dependency: filter-status-url
 
     ## UNDEPLOY THE DEPLOYMENT
     xopera-rest-undeploy-csar-test:
       type: sodalite.nodes.Tests.Text.URI
       properties:
-        url:                { get_attribute: [ SELF, input_component, output ] }
+        url: { concat: [ get_input: xopera-rest-address,
+                         'deploy/',
+                         get_attribute: [ filter-update-url, output ] ] }
         comparable_string:  '.*Undeploy job started*'
         method:             DELETE
         regex:              true
         status_code: 202
       requirements:
-        - input_component: concat-deploy-url
+        - dependency: filter-update-url
         - dependency: xopera-rest-deploy-status-csar-test
 
     ## GET SESSION TOKEN FROM THE CSAR UNDEPLOYMENT
@@ -215,21 +168,13 @@ topology_template:
       requirements:
         - input_component: xopera-rest-undeploy-csar-test
 
-    ## CONCAT URL USED TO TEST THE DEPLOYMENT'S STATUS
-    concat-status-url-undeploy:
-      type: sodalite.nodes.Utils.concat
-      properties:
-        preprefix:  { get_input: xopera-rest-address }
-        prefix:     'info/status?format=long&token='
-        input:      { get_attribute: [ SELF, input_component, output ] }
-      requirements:
-        - input_component: filter-status-url-undeploy
-
     ## TEST UNDEPLOYMENT STATUS
     xopera-rest-undeploy-status-csar-test:
       type: sodalite.nodes.Tests.Text.URI.Response
       properties:
-        url:                { get_attribute: [ SELF, input_component, output ] }
+        url: { concat: [ get_input: xopera-rest-address,
+                         'info/status?format=long&token=',
+                         get_attribute: [ filter-status-url-undeploy, output ] ] }
         comparable_string:   201
         method:             GET
         wait_for_code:      true
@@ -239,29 +184,22 @@ topology_template:
         max_retries:        30
         retry_delay:      4
       requirements:
-        - input_component: concat-status-url-undeploy
-
-    ## CONCAT THE URL USED FOR CSAR DELETION
-    concat-delete-url:
-      type: sodalite.nodes.Utils.concat
-      properties:
-        preprefix:  { get_input: xopera-rest-address }
-        prefix:     'manage/'
-        input:      { get_attribute: [ SELF, input_component, output ] }
-      requirements:
-        - input_component: filter-update-url
-        - dependency: xopera-rest-undeploy-status-csar-test
+        - dependency: filter-status-url-undeploy
 
     ## DELETE THE CSAR
     xopera-rest-delete-csar-test:
       type: sodalite.nodes.Tests.Text.URI
       properties:
-        url:                { get_attribute: [ SELF, input_component, output ] }
+#        url:                { get_attribute: [ SELF, input_component, output ] }
+        url: { concat: [ get_input: xopera-rest-address,
+                         'manage/',
+                         get_attribute: [ filter-update-url, output ] ] }
         comparable_string:  '.*Successfully removed.*'
         method:             DELETE
         regex:              true
       requirements:
-        - input_component: concat-delete-url
+        - dependency: filter-update-url
+        - dependency: xopera-rest-undeploy-status-csar-test
 
   outputs:
     root_connect_node:

@@ -1,7 +1,8 @@
----
 - hosts: all
 
   tasks:
+    - debug:
+        msg: "{{ input }}"
     - name: Try parsing JSON
       set_stats:
         data:
