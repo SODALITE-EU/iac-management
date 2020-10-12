@@ -19,13 +19,13 @@ node_types:
         operations:
           create:
             inputs:
-              command:                { default: { get_property: [ SELF, command ] } }
-              dir:                    { default: { get_property: [ SELF, dir ] } }
-              executable:             { default: { get_property: [ SELF, executable ] } }
-              comparable_string:      { default: { get_property: [ SELF, comparable_string ] } }
-              regex:                  { default: { get_property: [ SELF, regex ] } }
-              compare_to:             { default: { get_property: [ SELF, compare_to ] } }
-              host_os:                { default: { get_property: [ SELF, host_os ] } }
+              command:                { default: { get_property: [ SELF, command ] }, type: string }
+              dir:                    { default: { get_property: [ SELF, dir ] }, type: string }
+              executable:             { default: { get_property: [ SELF, executable ] }, type: string }
+              comparable_string:      { default: { get_property: [ SELF, comparable_string ] }, type: string }
+              regex:                  { default: { get_property: [ SELF, regex ] }, type: string }
+              compare_to:             { default: { get_property: [ SELF, compare_to ] }, type: string }
+              host_os:                { default: { get_property: [ SELF, host_os ] }, type: string }
             implementation:
               primary: modules/tests/command/response_body.yaml
               dependencies:

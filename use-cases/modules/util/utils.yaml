@@ -42,13 +42,13 @@ node_types:
         operations:
           create:
             inputs:
-              prepreprefix:     { default: { get_property: [ SELF, prepreprefix ] } }
-              preprefix:        { default: { get_property: [ SELF, preprefix ] } }
-              prefix:           { default: { get_property: [ SELF, prefix ] } }
-              input:            { default: { get_property: [ SELF, input ] } }
-              suffix:           { default: { get_property: [ SELF, suffix ] } }
-              postsuffix:       { default: { get_property: [ SELF, postsuffix ] } }
-              postpostsuffix:   { default: { get_property: [ SELF, postpostsuffix ] } }
+              prepreprefix:     { default: { get_property: [ SELF, prepreprefix ] }, type: string }
+              preprefix:        { default: { get_property: [ SELF, preprefix ] }, type: string }
+              prefix:           { default: { get_property: [ SELF, prefix ] }, type: string }
+              input:            { default: { get_property: [ SELF, input ] }, type: string }
+              suffix:           { default: { get_property: [ SELF, suffix ] }, type: string }
+              postsuffix:       { default: { get_property: [ SELF, postsuffix ] }, type: string }
+              postpostsuffix:   { default: { get_property: [ SELF, postpostsuffix ] }, type: string }
             implementation:
               primary: playbooks/text/concat.yaml
     requirements:
@@ -83,9 +83,9 @@ node_types:
         operations:
           create:
             inputs:
-              input:            { default: { get_property: [ SELF, input ] } }
-              to_replace:       { default: { get_property: [ SELF, to_replace ] } }
-              replacement:      { default: { get_property: [ SELF, replacement ] } }
+              input:            { default: { get_property: [ SELF, input ] }, type: string }
+              to_replace:       { default: { get_property: [ SELF, to_replace ] }, type: string }
+              replacement:      { default: { get_property: [ SELF, replacement ] }, type: string }
             implementation:
               primary: playbooks/text/replace.yaml
     requirements:
@@ -114,8 +114,8 @@ node_types:
         operations:
           create:
             inputs:
-              input:                { default: { get_property: [ SELF, input ] } }
-              key:                  { default: { get_property: [ SELF, key ] } }
+              input:                { default: { get_property: [ SELF, input ] }, type: string }
+              key:                  { default: { get_property: [ SELF, key ] }, type: string }
             implementation:
               primary: playbooks/text/extract_json.yaml
     capabilities:
@@ -145,7 +145,7 @@ node_types:
         operations:
           create:
             inputs:
-              path:                 { default: { get_property: [ SELF, path ] } }
+              path:                 { default: { get_property: [ SELF, path ] }, type: string }
             implementation:
               primary: playbooks/file/read.yaml
     capabilities:
@@ -177,9 +177,9 @@ node_types:
         operations:
           create:
             inputs:
-              path:                 { default: { get_property: [ SELF, path ] } }
-              bof:                  { default: { get_property: [ SELF, bof ] } }
-              eof:                  { default: { get_property: [ SELF, eof ] } }
+              path:                 { default: { get_property: [ SELF, path ] }, type: string }
+              bof:                  { default: { get_property: [ SELF, bof ] }, type: string }
+              eof:                  { default: { get_property: [ SELF, eof ] }, type: string }
             implementation:
               primary: playbooks/file/append.yaml
     capabilities:
