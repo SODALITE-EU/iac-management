@@ -7,7 +7,7 @@ imports:
   - modules/docker/docker_registry.yaml
   - modules/docker/docker_component.yaml
   - modules/docker/docker_certificate.yaml
-  - modules/sodalite/types.yaml
+  - library/sodalite/types.yaml
 
 topology_template:
 
@@ -51,8 +51,6 @@ topology_template:
       type: map
     xopera_env:
       type: map
-    identity_file:
-      type: string
     docker_ca_crt:
       type: string
     docker_ca_key:
@@ -96,7 +94,6 @@ topology_template:
         network:          { get_input: openstack-network-name } 
         security_groups:  { get_input: security-groups } 
         flavor:           { get_input: flavor-name }
-        identity_file:    { get_input: identity_file }
         username: centos
       requirements:  
         - protected_by: security-rules-sodalite 
@@ -129,8 +126,8 @@ topology_template:
         country_name:        { get_input: docker-registry-cert-country-name }
         organization_name:   { get_input: docker-registry-cert-organization-name }
         email_address:       { get_input: docker-registry-cert-email-address }
-        ca_crt:              { get_input: docker_ca_crt }
-        ca_key:              { get_input: docker_ca_key }
+#         ca_crt:              { get_input: docker_ca_crt }
+#         ca_key:              { get_input: docker_ca_key }
       requirements:
         - host: sodalite-vm 
         - dependency: docker-host        

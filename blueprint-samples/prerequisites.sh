@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # script to ensure pip, opera and ansible roles are installed
+# it also copies sodalite modules and creates / copies certs
 
 component_name="$1"
 ca_crt_dir="$2"
@@ -7,11 +8,11 @@ ca_crt_dir="$2"
 [[ ! -d "blueprints/$component_name" ]] && echo "Blueprint $component_name does not exist!" && exit 1
 
 
-PIP_INSTALLED=$(which pip3)
+PIP_INSTALLED=$(command -v pip3)
 if [ -z "$PIP_INSTALLED" ]; then
     echo
     echo
-    read -p "pip3 is not installed. Do you wish to update and install pip? " ynp
+    read -r -p "pip3 is not installed. Do you wish to update and install pip? " ynp
     if [ "$ynp" != "${ynp#[Yy]}" ] ;then
         echo
         echo "Installing pip3"
@@ -29,7 +30,7 @@ OPERA_INSTALLED=$(pip3 show opera)
 if [ -z "$OPERA_INSTALLED" ]; then
     echo
     echo
-    read -p "xOpera is not installed. Do you wish to update and install xOpera and required packages? " yn
+    read -r -p "xOpera is not installed. Do you wish to update and install xOpera and required packages? " yn
     if [ "$yn" != "${yn#[Yy]}" ] ;then
         echo
         echo "Installing xOpera"
@@ -55,7 +56,7 @@ echo "Cloning iac modules"
 rm -rf "blueprints/$component_name/modules"
 git clone https://github.com/SODALITE-EU/iac-modules.git "blueprints/$component_name/modules"
 
-if [[ "$component_name" == "docker-registry" ]]; then
+if [[ "$component_name" = "docker-registry" ]]  || [[ "$component_name" = "xOpera-REST-API" ]]; then
 
   echo
   echo

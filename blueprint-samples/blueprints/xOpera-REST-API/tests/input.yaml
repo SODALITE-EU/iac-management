@@ -4,7 +4,7 @@ image-name: "centos-7 x86_64"
 openstack-network-name: xlab
 security-groups: default,remote_access,sodalite-uc
 flavor-name: m1.medium
-identity_file: [PATH TO SSH KEY]
+# identity_file: [PATH TO SSH KEY]
 # DOCKER SETTINGS
 docker-network: sodalite
 dockerhub-user:
