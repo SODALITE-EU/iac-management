@@ -1,0 +1,192 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - modules/openstack/openstack_vm.yaml
+  - modules/docker/docker_host.yaml
+  - modules/docker/docker_network.yaml
+  - modules/docker/docker_registry.yaml
+  - modules/docker/docker_component.yaml
+  - modules/docker/docker_certificate.yaml
+  - library/sodalite/types.yaml
+
+topology_template:
+
+  inputs:  
+    docker-registry-ip:  
+      type: string 
+    ssh-key-name:  
+      type: string 
+    image-name:  
+      type: string 
+    openstack-network-name:  
+      type: string 
+    security-groups:  
+      type: string    
+    flavor-name:  
+      type: string                   
+    docker-network: 
+      type: string
+    dockerhub-user:
+      type: string
+      default: ""      
+    dockerhub-pass: 
+      type: string
+      default: "" 
+    docker-public-registry-url: 
+      type: string
+      default: ""
+    docker-private-registry-url: 
+      type: string
+      default: ""
+    docker-registry-cert-country-name:
+      type: string
+      default: ""
+    docker-registry-cert-organization-name: 
+      type: string
+      default: ""
+    docker-registry-cert-email-address: 
+      type: string
+      default: ""
+    postgres_env:
+      type: map
+    xopera_env:
+      type: map
+    docker_ca_crt:
+      type: string
+    docker_ca_key:
+      type: string
+
+  node_templates: 
+
+    security-rules-sodalite:  
+      type: sodalite.nodes.OpenStack.SecurityRules 
+      properties:  
+        ports:  
+          component_ports:  
+            port_range_max: 8085 
+            remote_ip_prefix: 0.0.0.0/0 
+            port_range_min: 8080 
+            protocol: tcp 
+          http_port:  
+            port_range_min: 80 
+            port_range_max: 80 
+            protocol: tcp 
+            remote_ip_prefix: 0.0.0.0/0 
+          5000_ports:  
+            port_range_min: 5000
+            port_range_max: 5005
+            protocol: tcp 
+            remote_ip_prefix: 0.0.0.0/0
+          https_port:
+            port_range_min: 443
+            port_range_max: 444
+            protocol: tcp
+            remote_ip_prefix: 0.0.0.0/0            
+        group_name:  sodalite-uc 
+        group_description:  Sodalite UC security group     
+
+    sodalite-vm:  
+      type: sodalite.nodes.OpenStack.VM 
+      properties:  
+        name:             "xOpera"
+        key_name:         { get_input: ssh-key-name } 
+        image:            { get_input: image-name }
+        network:          { get_input: openstack-network-name } 
+        security_groups:  { get_input: security-groups } 
+        flavor:           { get_input: flavor-name }
+        username: centos
+      requirements:  
+        - protected_by: security-rules-sodalite 
+
+    docker-host:
+      type: sodalite.nodes.DockerHost
+      requirements:
+        - host: sodalite-vm
+
+    docker-network:
+      type: sodalite.nodes.DockerNetwork
+      properties:  
+        name: { get_input: docker-network }
+      requirements:
+        - host: sodalite-vm 
+        - dependency: docker-host    
+        
+    docker-public-registry:
+      type: sodalite.nodes.DockerRegistry
+      properties:  
+        docker_registry_url: { get_input: docker-public-registry-url } 
+      requirements:
+        - host: sodalite-vm
+        - dependency: docker-host 
+
+    docker-registry-certificate:
+      type: sodalite.nodes.RegistryCertificate
+      properties:  
+        registry_ip:         { get_input: docker-private-registry-url }
+        country_name:        { get_input: docker-registry-cert-country-name }
+        organization_name:   { get_input: docker-registry-cert-organization-name }
+        email_address:       { get_input: docker-registry-cert-email-address }
+#         ca_crt:              { get_input: docker_ca_crt }
+#         ca_key:              { get_input: docker_ca_key }
+      requirements:
+        - host: sodalite-vm 
+        - dependency: docker-host        
+
+    # xopera-rest-api
+    # https://github.com/SODALITE-EU/xopera-rest-api        
+    xopera-openstack-keys:
+      type: sodalite.nodes.ConfigureKeys
+      requirements:
+        - host: sodalite-vm
+
+    xopera-postgres-container:
+      type: sodalite.nodes.DockerizedComponent
+      properties:
+        image_name: library/postgres:latest
+        volumes:
+          - "/home/postgres:/var/lib/postgresql/data"
+        ports: ['5432:5432']
+        alias: xopera-postgres
+        env: { get_input: postgres_env }
+        docker_network_name:  { get_property: [ SELF, network, name ] }
+      requirements:
+        - host:  docker-host
+        - network: docker-network
+        - registry: docker-public-registry 
+
+    xopera-flask-container:
+      type: sodalite.nodes.DockerizedComponent
+      properties:
+        alias: xopera-flask
+        docker_network_name:  { get_property: [ SELF, network, name ] }
+        image_name: sodaliteh2020/xopera-flask
+        restart_policy: always
+        volumes:
+          - "/var/run/docker.sock:/var/run/docker.sock"
+          - "/root/.ssh/:/root/.ssh/"
+          - "/home/xopera/certs:/home/xopera/certs"
+        exposed_ports:  ['5000']
+        env: { get_input: xopera_env }
+      requirements:
+        - host: docker-host
+        - registry: docker-public-registry  
+        - network: docker-network 
+        - dependency: xopera-openstack-keys
+        - dependency: xopera-postgres-container
+
+    xopera-nginx-container:
+      type: sodalite.nodes.DockerizedComponent
+      properties:
+        alias: xopera-nginx
+        docker_network_name:  { get_property: [ SELF, network, name ] }
+        image_name: sodaliteh2020/xopera-nginx
+        restart_policy: always
+        ports:  ['5001:443', '5000:80']
+        #exposed_ports:  ['443', '5000']
+        volumes:
+          - "/home/xopera/certs:/etc/nginx/certs"
+      requirements:
+        - host: docker-host
+        - registry: docker-public-registry   
+        - network: docker-network           
+        - dependency: xopera-flask-container

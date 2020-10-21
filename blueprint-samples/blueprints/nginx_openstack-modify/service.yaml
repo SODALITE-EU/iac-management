@@ -1,0 +1,38 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - library/nginx/main.yaml
+  - library/openstack/main.yaml
+
+topology_template:
+  inputs:
+    xopera-key-name:
+      type: string
+      required: True
+
+  node_templates:
+    nginx:
+      type: nginx.Server
+      requirements:
+        - host: vm
+
+    vm:
+      type: openstack.VM
+      properties:
+        name: website-nginx-test
+        image: centos7
+        flavor: m1.medium
+        network: orchestrator-net
+        security_groups: default,sodalite-xopera-rest,sodalite-remote-access
+        key_name: { get_input: xopera-key-name}
+
+    site-old:
+      type: nginx.Site-old
+      requirements:
+        - host: nginx
+
+    site-new:
+      type: nginx.Site-new
+      requirements:
+        - host: nginx
+        - dependency: site-old

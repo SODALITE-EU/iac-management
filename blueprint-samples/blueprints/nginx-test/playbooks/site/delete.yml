@@ -1,9 +1,0 @@
----
-- hosts: all
-  become: yes
-
-  tasks:
-    - name: Install sample site
-      file:
-        path: /usr/share/nginx/html/index.html
-        state: absent

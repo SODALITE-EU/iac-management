@@ -1,0 +1,11 @@
+ssh-key-name: some_key
+image-name: "centos-7 x86_64"
+openstack-network-name: xlab
+security-groups: default,remote_access,postgresql
+flavor-name: m1.medium
+docker-network: sodalite
+docker-public-registry-url: registry.hub.docker.com
+postgres_env:
+  POSTGRES_USER: username
+  POSTGRES_PASSWORD: password
+  POSTGRES_DB: postgres

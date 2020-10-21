@@ -1,96 +1,125 @@
-tosca_definitions_version: tosca_simple_yaml_1_0
+tosca_definitions_version: tosca_simple_yaml_1_3
 
-node_types:
-  my.nodes.VM.OpenStack:
-    derived_from: tosca.nodes.Compute
-    properties:
-      name:
-        type: string
-        description: Name that should be given to the VM in OpenStack
-      image:
-        type: string
-        description: OpenStack image id (image names are not accepted)
-      flavor:
-        type: string
-        description: OpenStack flavor id (flavor names are not accepted)
-      network:
-        type: string
-        description: OpenStack network id (network names are not accepted)
-      security_groups:
-        type: string
-        description: OpenStack names of the security groups to which the instance should be added.Comma separated string.
-      key_name:
-        type: string
-        description: OpenStack SSH key name that should be placed on the VM
-      boot_from_volume:
-        type: boolean
-        description: Mount volume
-      volume_size:
-        type: integer
-        description: Size of volume to mount
-    attributes:
-      id:
-        type: string
-        description: OpenStack id of the VM
-      private_address:
-        type: string
-        description: Private ipv4
-      public_address:
-        type: string
-        description: Public ipv4
-    interfaces:
-      Standard:
-        type: tosca.interfaces.node.lifecycle.Standard
-        create:
-          inputs:
-            vm_name:  { default: { get_property: [ SELF, name     ] } }
-            image:    { default: { get_property: [ SELF, image    ] } }
-            flavor:   { default: { get_property: [ SELF, flavor   ] } }
-            network:  { default: { get_property: [ SELF, network  ] } }
-            security_groups:  { default: { get_property: [ SELF, security_groups  ] } }
-            key_name: { default: { get_property: [ SELF, key_name ] } }
-            boot_from_volume: { default: { get_property: [ SELF, boot_from_volume ] } }
-            volume_size: { default: { get_property: [ SELF, volume_size ] } }
-          implementation: playbooks/vm/create.yml
-        delete:
-          inputs:
-            id: { default: { get_attribute: [ SELF, id ] } }
-          implementation: playbooks/vm/delete.yml
-
-  my.nodes.Docker:
-    derived_from: tosca.nodes.SoftwareComponent
-    attributes:
-      site_config_dir:
-        type: string
-        description: Location of docker site configs
-    interfaces:
-      Standard:
-        type: tosca.interfaces.node.lifecycle.Standard
-        create:
-          inputs:
-            network:  { default: { get_attribute: [ SELF, host, network] } }
-            public_ipv4_address: { default:  { get_attribute: [SELF, host, public_address] } }
-          implementation:
-            primary: playbooks/docker/install.yml
-        delete:
-          implementation:
-            primary: playbooks/docker/uninstall.yml
+imports:
+  - modules/openstack/openstack_vm.yaml
+  - modules/docker/docker_host.yaml
+  - modules/docker/docker_network.yaml
+  - modules/docker/docker_registry.yaml
+  - modules/docker/docker_component.yaml
+  - modules/docker/docker_certificate.yaml
 
 topology_template:
-  node_templates:
-    vm:
-      type: my.nodes.VM.OpenStack
-      properties:
-        name: docker-registry
-        image: centos7
-        flavor: m1.medium
-        network: orchestrator-network
-        security_groups: default,sodalite-xopera-rest,sodalite-remote-access
-        key_name: { get_input: xopera-key-name}
-        boot_from_volume: True
-        volume_size: 100
 
-    docker:
-      type: my.nodes.Docker
+  inputs:
+    ssh-key-name:
+      type: string
+    image-name:
+      type: string
+    openstack-network-name:
+      type: string
+    security-groups:
+      type: string
+    flavor-name:
+      type: string
+    docker-network:
+      type: string
+    docker-public-registry-url:
+      type: string
+    docker-registry-cert-country-name:
+      type: string
+    docker-registry-cert-organization-name:
+      type: string
+    docker-registry-cert-email-address:
+      type: string
+
+
+  node_templates:
+
+    security-rules-registry:
+      type: sodalite.nodes.OpenStack.SecurityRules
+      properties:
+        ports:
+          https_port:
+            port_range_min: 443
+            port_range_max: 444
+            remote_ip_prefix: 0.0.0.0/0
+            protocol: tcp
+        group_name: registry
+        group_description: Docker registry security group
+
+    registry-vm:
+      type: sodalite.nodes.OpenStack.VM
+      properties:
+        name: registry
+        key_name: { get_input: ssh-key-name }
+        image: { get_input: image-name }
+        network: { get_input: openstack-network-name }
+        security_groups: { get_input: security-groups }
+        flavor: { get_input: flavor-name }
+        username: centos
       requirements:
-        - host: vm
+        - protected_by: security-rules-registry
+
+    docker-host:
+      type: sodalite.nodes.DockerHost
+      requirements:
+        - host: registry-vm
+
+    docker-network:
+      type: sodalite.nodes.DockerNetwork
+      properties:
+        name: { get_input: docker-network }
+      requirements:
+        - host: registry-vm
+        - dependency: docker-host
+
+    docker-public-registry:
+      type: sodalite.nodes.DockerRegistry
+      properties:
+        docker_registry_url: { get_input: docker-public-registry-url }
+      requirements:
+        - host: registry-vm
+        - dependency: docker-host
+
+    docker-registry-certificate:
+      type: sodalite.nodes.RegistryCertificate
+      properties:
+        registry_ip: localhost
+        country_name: { get_input: docker-registry-cert-country-name }
+        organization_name: { get_input: docker-registry-cert-organization-name }
+        email_address: { get_input: docker-registry-cert-email-address }
+#        cert_path: "/home/xopera/certs/"
+#        cert_files_prefix: "image.docker.local"
+      requirements:
+        - host: registry-vm
+        - dependency: docker-host
+
+    #image registry
+    docker-registry-container:
+      type: sodalite.nodes.DockerizedComponent
+      properties:
+        alias: registry
+        image_name: library/registry:2
+        ports:
+          - "443:443"
+        #TODO
+        #get filenames from docker-registry-certificate
+        ca_cert: "/certs/ca.crt"
+        client_cert: "/certs/image.docker.local.crt"
+        client_key: "/certs/image.docker.local.key"
+        etc_hosts:
+          registry.docker.local: 127.0.0.1
+        volumes:
+          - "/home/localregistry/registry:/var/lib/registry"
+          - "/home/xopera/certs:/certs"
+        env:
+          REGISTRY_HTTP_ADDR: 0.0.0.0:443
+          REGISTRY_HTTP_TLS_CLIENTCAS: "[/certs/ca.crt]"
+          REGISTRY_HTTP_TLS_CERTIFICATE: "/certs/image.docker.local.crt"
+          REGISTRY_HTTP_TLS_KEY: "/certs/image.docker.local.key"
+        docker_network_name: { get_property: [ SELF, network, name ] }
+      requirements:
+        - host: docker-host
+        - registry: docker-public-registry
+        - network: docker-network
+        - dependency: docker-registry-certificate
