@@ -61,14 +61,14 @@ node_types:
         operations:  
           create:  
             inputs:  
-              network: { default: { get_property: [ SELF, network  ] } } 
-              flavor: { default: { get_property: [ SELF, flavor   ] } } 
-              key_name: { default: { get_property: [ SELF, key_name ] } } 
-              image: { default: { get_property: [ SELF, image    ] } } 
-              security_groups: { default: { get_property: [ SELF, security_groups  ] } } 
-              vm_name: { default: { get_property: [ SELF, name     ] } } 
+              network: { type: string, default: { get_property: [ SELF, network  ] } } 
+              flavor: { type: string, default: { get_property: [ SELF, flavor   ] } } 
+              key_name: { type: string, default: { get_property: [ SELF, key_name ] } } 
+              image: { type: string, default: { get_property: [ SELF, image    ] } } 
+              security_groups: { type: string, default: { get_property: [ SELF, security_groups  ] } } 
+              vm_name: { type: string, default: { get_property: [ SELF, name     ] } } 
             implementation: playbooks/openstack/vm/create.yml 
           delete:  
             inputs:  
-              id: { default: { get_attribute: [ SELF, id ] } } 
+              id: { type: string, default: { get_attribute: [ SELF, id ] } } 
             implementation: playbooks/openstack/vm/delete.yml 

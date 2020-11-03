@@ -97,19 +97,19 @@ node_types:
           create:
             inputs:
               # attribute "public_address" is internal to get a host, but we need to fetch it in playbooks
-              wm_public_address: { default: { get_attribute: [SELF, host, public_address] } }
-              wm_username: { default: { get_attribute: [SELF, host, username] } }
-              wm_keypath: { default: { get_attribute: [SELF, host, ssh-key] } }
+              wm_public_address: { type: string, default: { get_attribute: [SELF, host, public_address] } }
+              wm_username: { type: string, default: { get_attribute: [SELF, host, username] } }
+              wm_keypath: { type: string, default: { get_attribute: [SELF, host, ssh-key] } }
               # Conditionals or default values will help to get rid of properties that are not used in playbooks
-              job_name: { default: { get_property: [SELF, name] } }
-              job_script: { default: { get_property: [SELF, script] } }
-              job_workspace: { default: { get_property: [SELF, workspace] } }
-              job_email: { default: { get_property: [SELF, email] } }
-              job_nb_nodes: { default: { get_property: [SELF, nb_nodes] } }
-              job_ppn: { default: { get_property: [SELF, ppn] } }
-              job_gpus: { default: { get_property: [SELF, gpus] } }
-              job_walltime: { default: { get_property: [SELF, walltime] } }
-              job_enable_audit: { default: { get_property: [SELF, enable_audit] } }
+              job_name: { type: string, default: { get_property: [SELF, name] } }
+              job_script: { type: string, default: { get_property: [SELF, script] } }
+              job_workspace: { type: string, default: { get_property: [SELF, workspace] } }
+              job_email: { type: string, default: { get_property: [SELF, email] } }
+              job_nb_nodes: { type: string, default: { get_property: [SELF, nb_nodes] } }
+              job_ppn: { type: integer, default: { get_property: [SELF, ppn] } }
+              job_gpus: { type: integer, default: { get_property: [SELF, gpus] } }
+              job_walltime: { type: string, default: { get_property: [SELF, walltime] } }
+              job_enable_audit: { type: boolean, default: { get_property: [SELF, enable_audit] } }
             implementation: 
               primary: torque-job/playbooks/create.yml
               dependencies: 
@@ -138,19 +138,19 @@ node_types:
           create:
             inputs:
               # attribute "public_address" is internal to get a host, but we need to fetch it in playbooks
-              wm_public_address: { default: { get_attribute: [SELF, host, public_address] } }
-              wm_username: { default: { get_attribute: [SELF, host, username] } }
-              wm_keypath: { default: { get_attribute: [SELF, host, ssh-key] } }
+              wm_public_address: { type: string, default: { get_attribute: [SELF, host, public_address] } }
+              wm_username: { type: string, default: { get_attribute: [SELF, host, username] } }
+              wm_keypath: { type: string, default: { get_attribute: [SELF, host, ssh-key] } }
               # Conditionals or default values will help to get rid of properties that are not used in playbooks
-              job_name: { default: { get_property: [SELF, name] } }
-              job_script: { default: { get_property: [SELF, script] } }
-              job_workspace: { default: { get_property: [SELF, workspace] } }
-              job_email: { default: { get_property: [SELF, email] } }
-              job_node_name: { default: { get_property: [SELF, job_node, name] } }
-              job_ppn: { default: { get_property: [SELF, ppn] } }
-              job_gpus: { default: { get_property: [SELF, gpus] } }
-              job_walltime: { default: { get_property: [SELF, walltime] } }
-              job_enable_audit: { default: { get_property: [SELF, enable_audit] } }
+              job_name: { type: string, default: { get_property: [SELF, name] } }
+              job_script: { type: string, default: { get_property: [SELF, script] } }
+              job_workspace: { type: string, default: { get_property: [SELF, workspace] } }
+              job_email: { type: string, default: { get_property: [SELF, email] } }
+              job_node_name: { type: string, default: { get_property: [SELF, job_node, name] } }
+              job_ppn: { type: integer, default: { get_property: [SELF, ppn] } }
+              job_gpus: { type: integer, default: { get_property: [SELF, gpus] } }
+              job_walltime: { type: string, default: { get_property: [SELF, walltime] } }
+              job_enable_audit: { type: boolean, default: { get_property: [SELF, enable_audit] } }
             implementation: 
               primary: torque-job/playbooks/create.yml
               dependencies: 
@@ -181,18 +181,18 @@ node_types:
         operations:  
           configure:
             inputs:
-              wm_public_address: { default: { get_attribute: [SELF, host, public_address] } }
-              wm_username: { default: { get_attribute: [SELF, host, username] } }
-              wm_keypath: { default: { get_attribute: [SELF, host, ssh-key] } }
-              job_workspace: { default: { get_property: [SELF, configured_job, workspace] } }
+              wm_public_address: { type: string, default: { get_attribute: [SELF, host, public_address] } }
+              wm_username: { type: string, default: { get_attribute: [SELF, host, username] } }
+              wm_keypath: { type: string, default: { get_attribute: [SELF, host, ssh-key] } }
+              job_workspace: { type: string, default: { get_property: [SELF, configured_job, workspace] } }
             implementation: torque-job/playbooks/configure.yml
           start:
             inputs:
-              wm_public_address: { default: { get_attribute: [SELF, host, public_address] } }
-              wm_username: { default: { get_attribute: [SELF, host, username] } }
-              wm_keypath: { default: { get_attribute: [SELF, host, ssh-key] } }
-              job_name: { default: { get_property: [SELF, configured_job, name] } }
-              job_workspace: { default: { get_property: [SELF, configured_job, workspace] } }
+              wm_public_address: { type: string, default: { get_attribute: [SELF, host, public_address] } }
+              wm_username: { type: string, default: { get_attribute: [SELF, host, username] } }
+              wm_keypath: { type: string, default: { get_attribute: [SELF, host, ssh-key] } }
+              job_name: { type: string, default: { get_property: [SELF, configured_job, name] } }
+              job_workspace: { type: string, default: { get_property: [SELF, configured_job, workspace] } }
             implementation: torque-job/playbooks/start.yml
     capabilities:
       job:
@@ -235,16 +235,16 @@ node_types:
         operations:
           start:
             inputs:
-              wm_public_address: { default: { get_attribute: [SELF, host, public_address] } }
-              wm_username: { default: { get_attribute: [SELF, host, username] } }
-              wm_keypath: { default: { get_attribute: [SELF, host, ssh-key] } }
+              wm_public_address: { type: string, default: { get_attribute: [SELF, host, public_address] } }
+              wm_username: { type: string, default: { get_attribute: [SELF, host, username] } }
+              wm_keypath: { type: string, default: { get_attribute: [SELF, host, ssh-key] } }
               job_id: { type: string, default: { get_attribute: [SELF, job, job_id] } }
-              job_name: { default: { get_property: [SELF, job, configured_job, name] } }
-              job_workspace: { default: { get_property: [SELF, job, configured_job, workspace] } }
-              job_walltime: { default: { get_property: [SELF, job, configured_job, walltime] } }
-              job_monitor_period: { default: { get_property: [SELF, monitor_period] } }
-              job_monitor_retries_headroom: { default: { get_property: [SELF, monitor_retries_headroom] } }
-              job_enable_audit: { default: { get_property: [SELF, job, configured_job, enable_audit] } }
+              job_name: { type: string, default: { get_property: [SELF, job, configured_job, name] } }
+              job_workspace: { type: string, default: { get_property: [SELF, job, configured_job, workspace] } }
+              job_walltime: { type: string, default: { get_property: [SELF, job, configured_job, walltime] } }
+              job_monitor_period: { type: integer, default: { get_property: [SELF, monitor_period] } }
+              job_monitor_retries_headroom: { type: integer, default: { get_property: [SELF, monitor_retries_headroom] } }
+              job_enable_audit: { type: boolean, default: { get_property: [SELF, job, configured_job, enable_audit] } }
             implementation: torque-job/playbooks/check.yml  
     capabilities:
       job:
@@ -261,10 +261,10 @@ relationship_types:
           add_source:
             inputs:
               # attribute "public_address" is internal to get a host, but we need to fetch it in playbooks
-              wm_public_address: { default: { get_attribute: [SELF, host, public_address] } }
-              wm_username: { default: { get_attribute: [SELF, host, username] } }
-              wm_keypath: { default: { get_attribute: [SELF, host, ssh-key] } }
+              wm_public_address: { type: string, default: { get_attribute: [SELF, host, public_address] } }
+              wm_username: { type: string, default: { get_attribute: [SELF, host, username] } }
+              wm_keypath: { type: string, default: { get_attribute: [SELF, host, ssh-key] } }
               # Conditionals or default values will help to get rid of properties that are not used in playbooks
-              job_name: { default: { get_property: [SELF, name] } }
+              job_name: { type: string, default: { get_property: [SELF, name] } }
             implementation:
               primary: torque-job/playbooks/dummy-relation-interface.yml

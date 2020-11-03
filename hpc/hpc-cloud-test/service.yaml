@@ -22,8 +22,8 @@ node_types:
         operations:       
           create:         
             inputs:
-              job_name: { default: { get_property: [SELF, job_config, name] } }
-              job_workspace: { default: { get_property: [SELF, job_config, workspace] } }   
+              job_name: { type: string, default: { get_property: [SELF, job_config, name] } }
+              job_workspace: { type: string, default: { get_property: [SELF, job_config, workspace] } }   
             implementation:
               primary: configuration/playbooks/copy.yml
 
