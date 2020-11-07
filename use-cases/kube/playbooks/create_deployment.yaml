@@ -1,0 +1,23 @@
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: "Create simple deployment on Kubernetes"
+      community.kubernetes.k8s:
+        state: present
+        kubeconfig: "{{ kubeconfig }}"
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: "{{ deployment_name }}"
+            namespace: "{{ deployment_namespace }}"
+            labels: "{{ deployment_labels }}"
+          spec:
+            selector:
+              matchLabels: "{{ deployment_selector }}"
+            replicas: "{{ deployment_replicas }}"
+            template:
+              metadata:
+                labels: "{{ deployment_pod_labels }}"
+              spec:
+                containers: "{{ deployment_pod_containers }}"
