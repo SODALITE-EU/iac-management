@@ -43,4 +43,4 @@
           set_stats:
             data:
               status: false
-              response_status: "{{ ansible_failed_result }}"
+              checked_against: "{{ ansible_failed_result }}"

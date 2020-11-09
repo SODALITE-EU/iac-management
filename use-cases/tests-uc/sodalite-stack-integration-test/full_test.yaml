@@ -1,0 +1,453 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+# BP Builder: http://ip/docs/
+# xOpera Rest: https://ip:5001/
+# Image Builder: https://ip:5002/
+# Semantic Reasoner: http://ip:8080/
+# Test Endpoint: http://ip:5555/
+
+imports:
+  - modules/tests/test_definitions.yaml
+  - modules/util/utils.yaml
+
+node_types:
+  sodalite.nodes.Tests.Text.Command.INPUTS:
+    derived_from: sodalite.nodes.Tests.Text.Command
+    description: Command test node used to deploy with inputs.yaml provided
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        operations:
+          create:
+            inputs:
+              command:                { default: { get_property: [ SELF, command ] }, type: string }
+              dir:                    { default: { get_property: [ SELF, dir ] }, type: string }
+              executable:             { default: { get_property: [ SELF, executable ] }, type: string }
+              comparable_string:      { default: { get_property: [ SELF, comparable_string ] }, type: string }
+              regex:                  { default: { get_property: [ SELF, regex ] }, type: string }
+              compare_to:             { default: { get_property: [ SELF, compare_to ] }, type: string }
+              host_os:                { default: { get_property: [ SELF, host_os ] }, type: string }
+            implementation:
+              primary: modules/tests/command/response_body.yaml
+              dependencies:
+                - artifacts/input.yaml
+
+  sodalite.nodes.Utils.read.File.TTL:
+    derived_from: sodalite.nodes.Utils.read.File
+    description: File read node used to read a file from the artifacts folder
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        operations:
+          create:
+            inputs:
+              path:                 { default: { get_property: [ SELF, path ] }, type: string }
+            implementation:
+              primary: playbooks/read.yaml
+              dependencies:
+                - artifacts/kb/compute.rm.ttl
+                - artifacts/kb/site.rm.ttl
+                - artifacts/kb/sodalite.aadm.ttl
+                - artifacts/kb/docker_registry.rm.ttl
+                - artifacts/kb/docker_component.rm.ttl
+
+topology_template:
+
+  inputs:
+    blueprint-builder-address:
+      type: string
+    xopera-rest-address:
+      type: string
+    image-builder-address:
+      type: string
+    sematic-reasoner-address:
+      type: string
+    test-site-address:
+      type: string
+    csar-path:
+      type: string
+      description: This is a file folder (without a filename!)
+      default: "/tmp/xopera-test-tmp/"
+    csar-name:
+      type: string
+      description: Optional csar name (deployment.json by default). Used for testing sema
+      default: deployment.json
+
+  node_templates:
+
+    # SEMANTIC REASONER
+
+    ## TEST SEMANTIC REASONER
+    sem-reasoner-connect-test:
+      type: sodalite.nodes.Tests.Text.URI
+      properties:
+        comparable_string: "Successfully connected to both defect predictor and graph-db"
+        url: { concat: [ get_input: sematic-reasoner-address, "reasoner-api/v0.6/testReasoner" ] }
+        timeout: 300
+
+    ## READ FILES TO BE UPLOADED
+    sem-reasoner-read-compute-rm:
+      type: sodalite.nodes.Utils.read.File.TTL
+      properties:
+        path: compute.rm.ttl
+
+    sem-reasoner-read-site-rm:
+      type: sodalite.nodes.Utils.read.File.TTL
+      properties:
+        path: site.rm.ttl
+
+    sem-reasoner-read-docker-registry-rm:
+      type: sodalite.nodes.Utils.read.File.TTL
+      properties:
+        path: docker_registry.rm.ttl
+
+    sem-reasoner-read-docker-component-rm:
+      type: sodalite.nodes.Utils.read.File.TTL
+      properties:
+        path: docker_component.rm.ttl
+
+    sem-reasoner-read-sodalite-aadm:
+      type: sodalite.nodes.Utils.read.File.TTL
+      properties:
+        path: sodalite.aadm.ttl
+
+    ## UPLOAD DEPENDENCIES
+    sem-reasoner-upload-compute-rm:
+      type: sodalite.nodes.Tests.Text.Command.INPUTS
+      properties:
+        command: { concat: [ 'curl -d "rmTTL=',
+                             get_attribute: [ sem-reasoner-read-compute-rm, output ],
+                             '&rmURI=" -H "Content-Type: application/x-www-form-urlencoded" -X POST ',
+                             get_input: sematic-reasoner-address,
+                             'reasoner-api/v0.6/saveRM/'
+        ] }
+        comparable_string:  '.*"rmuri".*'
+        regex:              true
+      requirements:
+        - dependency: sem-reasoner-read-compute-rm
+
+    sem-reasoner-upload-site-rm:
+      type: sodalite.nodes.Tests.Text.Command.INPUTS
+      properties:
+        command: { concat: [ 'curl -d "rmTTL=',
+                             get_attribute: [ sem-reasoner-read-site-rm, output ],
+                             '&rmURI=" -H "Content-Type: application/x-www-form-urlencoded" -X POST ',
+                             get_input: sematic-reasoner-address,
+                             'reasoner-api/v0.6/saveRM/' ] }
+        comparable_string:  '.*"rmuri".*'
+        regex:              true
+      requirements:
+        - dependency: sem-reasoner-read-site-rm
+
+    sem-reasoner-upload-docker-registry-rm:
+      type: sodalite.nodes.Tests.Text.Command.INPUTS
+      properties:
+        command: { concat: [ 'curl -d "rmTTL=',
+                             get_attribute: [ sem-reasoner-read-docker-registry-rm, output ],
+                             '&rmURI=" -H "Content-Type: application/x-www-form-urlencoded" -X POST ',
+                             get_input: sematic-reasoner-address,
+                             'reasoner-api/v0.6/saveRM/' ] }
+        comparable_string:  '.*"rmuri".*'
+        regex:              true
+      requirements:
+        - dependency: sem-reasoner-read-docker-registry-rm
+
+    sem-reasoner-upload-docker-component-rm:
+      type: sodalite.nodes.Tests.Text.Command.INPUTS
+      properties:
+        command: { concat: [ 'curl -X POST ',
+                             get_input: sematic-reasoner-address, 'reasoner-api/v0.6/saveRM/',
+                             ' -H "cache-control: no-cache"',
+                             ' -H "Content-Type: application/x-www-form-urlencoded"',
+                             ' -H "postman-token: a3c6574e-3bd2-6210-cdc2-047c3cd7a8f9"',
+                             ' -d "rmTTL=', get_attribute: [ sem-reasoner-read-docker-component-rm, output ], '&rmURI="' ] }
+        comparable_string:  '.*"rmuri".*'
+        regex:              true
+      requirements:
+        - dependency: sem-reasoner-read-docker-component-rm
+
+    ## UPLOAD IMAGE
+    sem-reasoner-upload-sodalite-aadm:
+      type: sodalite.nodes.Tests.Text.Command.INPUTS
+      properties:
+        command: { concat: [ 'curl -d "aadmTTL=',
+                             get_attribute: [ sem-reasoner-read-sodalite-aadm, output ],
+                             '&aadmURI=" -H "Content-Type: application/x-www-form-urlencoded" -X POST ',
+                             get_input: sematic-reasoner-address,
+                             'reasoner-api/v0.6/saveAADM/' ] }
+        comparable_string:  '.*"aadmuri".*'
+        regex:              true
+      requirements:
+        - dependency: sem-reasoner-read-sodalite-aadm
+
+    ## GET IMAGE TOKEN
+    sem-reasoner-filter-returned-url:
+      type: sodalite.nodes.Utils.extract.JSON
+      properties:
+        input:  { get_attribute: [ SELF, input_component, checked_against ] }
+        key:    "aadmuri"
+      requirements:
+        - input_component: sem-reasoner-upload-sodalite-aadm
+
+    ## REMOVE JAVA ESCAPES
+    sem-reasoner-unescape-returned-url:
+      type: sodalite.nodes.Utils.replace
+      properties:
+        input:        { get_attribute: [ SELF, input_component, output ] }
+        to_replace:   "\\"
+      requirements:
+        - input_component: sem-reasoner-filter-returned-url
+
+    ## DOWNLOAD IMAGE
+    sem-reasoner-json-image-download:
+      type: sodalite.nodes.Tests.Text.URI.Download.Keep
+      properties:
+        comparable_string:  '.*www\.sodalite\.eu.*'
+        url: { concat: [ get_input: sematic-reasoner-address,
+                         'reasoner-api/v0.6/aadm?aadmIRI=',
+                         get_attribute: [ sem-reasoner-unescape-returned-url, output ] ] }
+        download_directory: { get_input: csar-path }
+        filename:           { get_input: csar-name }
+        timeout: 300
+        regex: true
+        wait_for_code:      true
+        max_retries:        10
+        retry_delay:        30
+        status_code:
+          - 200
+      requirements:
+        - input_component: sem-reasoner-unescape-returned-url
+
+    #######################################################################
+
+    # BLUEPRINT BUILDER
+
+    # TRY TO CONNECT TO THE ROOT
+    bp-builder-connect-test:
+      type: sodalite.nodes.Tests.Text.URI
+      properties:
+        comparable_string: ".*iac-blueprint-builder.*"
+        url: { concat: [ get_input: blueprint-builder-address,
+                         "docs" ] }
+        regex: true
+
+    ## APPEND JSON BODY
+    bp-builder-append-json-body:
+      type: sodalite.nodes.Utils.append.File
+      properties:
+        bof: |-
+          {
+          "name": "deptest",
+          "data":
+        path:  { concat: [ get_input: csar-path,
+                           get_input: csar-name ] }
+        eof: |
+          }
+
+    ## READ THE DOWNLOADED JSON
+    bp-builder-read-downloaded-json:
+      type: sodalite.nodes.Utils.read.File
+      properties:
+        path: { concat: [ get_input: csar-path,
+                          get_input: csar-name ] }
+
+    ## SEND JSON TO BP BUILDER
+    bp-builder-upload-test:
+      type: sodalite.nodes.Tests.Text.Command
+      properties:
+        command: { concat: [ 'curl -X POST "',
+                             get_input: blueprint-builder-address,
+                             'parse" -H  "accept: */*" -H  "Content-Type: application/json" -d @',
+                             get_input: csar-path,
+                             get_input: csar-name ] }
+        comparable_string:  '.*Revision saved*'
+        regex:              true
+
+    #######################################################################
+
+    # XOPERA REST API
+
+    ## TRY TO CONNECT TO THE ROOT
+    xopera-connect-test:
+      type: sodalite.nodes.Tests.Text.URI
+      properties:
+        comparable_string: ".*xOpera REST API.*"
+        url: { get_input: xopera-rest-address }
+        regex: true
+
+    ## TEST KEY PAIR ENDPOINT
+    xopera-rest-public-key-test:
+      type: sodalite.nodes.Tests.Text.URI
+      properties:
+        url: { concat: [ get_input: xopera-rest-address,
+                         "ssh/keys/public" ] }
+        comparable_string:  '.*"key_pair_name": .*"public_key": .*'
+        regex:              true
+
+    ## GET BLUEPRINT TOKEN FROM THE BLUEPRINT BUILDER TEST NODE
+    filter-update-url:
+      type: sodalite.nodes.Utils.extract.JSON
+      properties:
+        input:  { get_attribute: [ SELF, input_component, checked_against ] }
+        key:    blueprint_token
+      requirements:
+        - input_component: bp-builder-upload-test
+
+    ## DEPLOY CSAR WITH INPUTS
+    xopera-rest-deploy-csar-test:
+      type: sodalite.nodes.Tests.Text.Command.INPUTS
+      properties:
+        command: { concat: [ 'curl -X POST ',
+                             get_input: xopera-rest-address,
+                             'deploy/',
+                             get_attribute: [ filter-update-url, output ],
+                             ' -H  "accept: application/json"',
+                             ' -H  "Content-Type: multipart/form-data"',
+                             ' -F  "inputs_file=@input.yaml;type=application/x-yaml"' ] }
+        comparable_string:  '.*Deploy job started*'
+        regex:              true
+      requirements:
+        - dependency: filter-update-url
+
+    ## GET SESSION TOKEN FROM THE CSAR DEPLOYMENT
+    filter-status-url:
+      type: sodalite.nodes.Utils.extract.JSON
+      properties:
+        input:  { get_attribute: [ SELF, input_component, checked_against ] }
+        key:        session_token
+      requirements:
+        - input_component: xopera-rest-deploy-csar-test
+
+    ## TEST DEPLOYMENT'S STATUS AND WAIT TILL SUCCESS/FAILURE
+    xopera-rest-deploy-status-csar-test:
+      type: sodalite.nodes.Tests.Text.URI.Response
+      properties:
+        url: { concat: [ get_input: xopera-rest-address,
+                         'info/status?format=long&token=',
+                         get_attribute: [ filter-status-url, output ] ] }
+        comparable_string:  201
+        method:             GET
+        wait_for_code:      true
+        status_code:
+          - 201
+        timeout:            120
+        max_retries:        30
+        retry_delay:        20
+      requirements:
+        - dependency: filter-status-url
+
+    ## TEST THE DEPLOYMENT
+    test-web-connect-test:
+      type: sodalite.nodes.Tests.Text.URI
+      properties:
+        comparable_string: ".*Welcome to SODALITE test site deployed by SODALITE stack.*"
+        url: { get_input: test-site-address }
+        regex: true
+      requirements:
+        - dependency: xopera-rest-deploy-status-csar-test
+
+    ## UNDEPLOY THE DEPLOYMENT
+    xopera-rest-undeploy-csar-test:
+      type: sodalite.nodes.Tests.Text.Command.INPUTS
+      properties:
+        command: { concat: [ 'curl -X DELETE ',
+                             get_input: xopera-rest-address,
+                             'deploy/',
+                             get_attribute: [ filter-update-url, output ],
+                             ' -H  "accept: application/json"',
+                             ' -H  "Content-Type: multipart/form-data"',
+                             ' -F  "inputs_file=@input.yaml;type=application/x-yaml"' ] }
+        comparable_string:  '.*Undeploy job started*'
+        regex:              true
+      requirements:
+        - dependency: filter-update-url
+        - dependency: xopera-rest-deploy-status-csar-test
+
+    ## GET SESSION TOKEN FROM THE CSAR UNDEPLOYMENT
+    filter-status-url-undeploy:
+      type: sodalite.nodes.Utils.extract.JSON
+      properties:
+        input:  { get_attribute: [ SELF, input_component, checked_against ] }
+        key:        session_token
+      requirements:
+        - input_component: xopera-rest-undeploy-csar-test
+
+    ## TEST UNDEPLOYMENT STATUS
+    xopera-rest-undeploy-status-csar-test:
+      type: sodalite.nodes.Tests.Text.URI.Response
+      properties:
+        url: { concat: [ get_input: xopera-rest-address,
+                         'info/status?format=long&token=',
+                         get_attribute: [ filter-status-url-undeploy, output ] ] }
+        comparable_string:   201
+        method:             GET
+        wait_for_code:      true
+        status_code:
+          - 201
+        timeout:            120
+        max_retries:        30
+        retry_delay:        20
+      requirements:
+        - dependency: filter-status-url-undeploy
+
+    ## DELETE THE CSAR
+    xopera-rest-delete-csar-test:
+      type: sodalite.nodes.Tests.Text.URI
+      properties:
+        url: { concat: [ get_input: xopera-rest-address,
+                         'manage/',
+                         get_attribute: [ filter-update-url, output ] ] }
+        comparable_string:  '.*Successfully removed.*'
+        method:             DELETE
+        regex:              true
+        timeout: 120
+      requirements:
+        - dependency: filter-update-url
+
+  outputs:
+    ## SEMANTIC REASONER
+    sr_connect_node:
+      description: 'Verifies connection by connection to the "/reasoner-api/v0.6/testReasoner" endpoint and matching its success string'
+      value: { get_attribute: [ sem-reasoner-connect-test, status ] }
+    sr_upload_node:
+      description: Node that uploads turtle format images to the knowledge base
+      value: { get_attribute: [ sem-reasoner-upload-sodalite-aadm, status ] }
+    sr_download_node:
+      description: Node that downloads json images from the semantic reasoner
+      value: { get_attribute: [ sem-reasoner-json-image-download, status ] }
+
+    ## BP BUILDER
+    bp_builder_connect_node:
+      description: 'Verifies connection by connecting to the "/docs" endpoint and matching some string on that site'
+      value: { get_attribute: [ bp-builder-connect-test, status ] }
+    bp_builder_upload_test:
+      description: Uploads the json from the semantic reasoner to the blueprint builder that passes it to xOpera Rest API
+      value: { get_attribute: [ bp-builder-upload-test, status ] }
+
+    ## XOPERA REST
+    xopera_root_connect_node:
+      description: Verifies connection by connecting to the root xOpera Rest API endpoint and matching some string on that site
+      value: { get_attribute: [ xopera-connect-test, status ] }
+    xopera_public_key_node:
+      description: Verifies if the ssh key endpoint is working
+      value: { get_attribute: [ xopera-rest-public-key-test, status ] }
+    xopera_deploy_node:
+      description: Deploys the deployment generated using the blueprint builder
+      value: { get_attribute: [ xopera-rest-deploy-csar-test, status ] }
+    xopera_deployment_status_node:
+      description: Waits for the deployment to finish and fails if not successful before a timeout
+      value: { get_attribute: [ xopera-rest-deploy-status-csar-test, status ] }
+    xopera_undeploy_node:
+      description: Undeploys the deployment
+      value: { get_attribute: [ xopera-rest-undeploy-csar-test, status ] }
+    xopera_undeployment_status_node:
+      description: Waits for the undeployment to finish and fails if not successful before a timeout
+      value: { get_attribute: [ xopera-rest-undeploy-status-csar-test, status ] }
+    xopera_delete_node:
+      description: Deletes the deployment
+      value: { get_attribute: [ xopera-rest-delete-csar-test, status ] }
+
+    ## TEST WEB TEST
+    web_connect_node:
+      description: Tests connection to the deployed test website
+      value: { get_attribute: [ test-web-connect-test, status ] }

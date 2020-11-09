@@ -1,0 +1,231 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+# BP Builder: http://10.10.43.81/docs/
+# xOpera Rest: https://10.10.43.81:5001/
+# Image Builder: https://10.10.43.81:5002/
+# Sematic Reasoner: https://10.10.43.81:7200/
+
+imports:
+  - modules/tests/test_definitions.yaml
+  - modules/util/utils.yaml
+
+node_types:
+  sodalite.nodes.Tests.Text.Command.CSAR:
+    derived_from: sodalite.nodes.Tests.Text.Command
+    description: Command test node used to deploy CSAR zip file from the artifact folder.
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        operations:
+          create:
+            inputs:
+              command:                { default: { get_property: [ SELF, command ] }, type: string }
+              dir:                    { default: { get_property: [ SELF, dir ] }, type: string }
+              executable:             { default: { get_property: [ SELF, executable ] }, type: string }
+              comparable_string:      { default: { get_property: [ SELF, comparable_string ] }, type: string }
+              regex:                  { default: { get_property: [ SELF, regex ] }, type: string }
+              compare_to:             { default: { get_property: [ SELF, compare_to ] }, type: string }
+              host_os:                { default: { get_property: [ SELF, host_os ] }, type: string }
+            implementation:
+              primary: modules/tests/command/response_body.yaml
+              dependencies:
+                - artifacts/CSAR-sodalite.zip
+                - artifacts/input-sodalite.yaml
+
+topology_template:
+
+  inputs:
+    xopera-rest-address:
+      type: string
+
+  node_templates:
+
+    # XOPERA REST API
+
+    ## TRY TO CONNECT TO THE ROOT
+    xopera-rest-test:
+      type: sodalite.nodes.Tests.Text.URI
+      properties:
+        comparable_string: ".*xOpera REST API.*"
+        url: { get_input: xopera-rest-address }
+        regex: true
+
+    ## TEST KEY PAIR ENDPOINT
+    xopera-rest-public-key-test:
+      type: sodalite.nodes.Tests.Text.URI
+      properties:
+        url: { concat: [ get_input: xopera-rest-address, "ssh/keys/public" ] }
+        comparable_string:  '.*"key_pair_name": .*"public_key": .*'
+        regex:              true
+
+    ## ADD A BASE REVISION OF THE TEST REPLOYMENT (the CSAR has to be located in artifacts/ and named CSAR-sodalite.zip)
+    xopera-rest-add-csar-test:
+      type: sodalite.nodes.Tests.Text.Command.CSAR
+      properties:
+        command: { concat: [ 'curl -X POST ',
+                            { get_input: xopera-rest-address },
+                             'manage ',
+                             '-H "accept: application/json" ',
+                             '-H  "Content-Type: multipart/form-data" ',
+                             '-F "CSAR=@CSAR-sodalite.zip;type=application/zip" ' ] }
+        comparable_string:  '.*Revision saved*'
+        regex:              true
+
+    ## GET BLUEPRINT TOKEN FROM THE PREVIOUS NODE
+    filter-update-url:
+      type: sodalite.nodes.Utils.extract.JSON
+      properties:
+        input:  { get_attribute: [ SELF, input_component, checked_against ] }
+        key:    blueprint_token
+      requirements:
+        - input_component: xopera-rest-add-csar-test
+
+    ## TEST UPDATING OF THE REMOTE CSAR
+    xopera-rest-modify-csar-test:
+      type: sodalite.nodes.Tests.Text.Command.CSAR
+      properties:
+        command: { concat: ['curl -X POST ',
+                            get_input: xopera-rest-address,
+                            'manage/',
+                            get_attribute: [ filter-update-url, output ],
+                            ' -H  "accept: application/json"',
+                            ' -H "Content-Type: multipart/form-data"',
+                            ' -F "CSAR=@CSAR-sodalite.zip;type=application/zip"' ] }
+        comparable_string:  '.*Revision saved*'
+        regex:              true
+      requirements:
+        - dependency: filter-update-url
+
+    ###################################################################
+
+    ## DEPLOY CSAR WITH INPUTS
+    xopera-rest-deploy-csar-test:
+      type: sodalite.nodes.Tests.Text.Command.CSAR
+      properties:
+        command: { concat: [ 'curl -X POST ',
+                             get_input: xopera-rest-address,
+                             'deploy/',
+                             { get_attribute: [ filter-update-url, output ] },
+                             ' -H  "accept: application/json"',
+                             ' -H "Content-Type: multipart/form-data"',
+                             ' -F "inputs_file=@input-sodalite.yaml;type=application/x-yaml"'
+        ]}
+        comparable_string:  '.*Deploy job started*'
+        regex:              true
+      requirements:
+        - dependency: filter-update-url
+
+    ###################################################################
+
+    ## GET SESSION TOKEN FROM THE CSAR DEPLOYMENT
+    filter-status-url:
+      type: sodalite.nodes.Utils.extract.JSON
+      properties:
+        input:  { get_attribute: [ SELF, input_component, checked_against ] }
+        key:        session_token
+      requirements:
+        - input_component: xopera-rest-deploy-csar-test
+
+    ## TEST DEPLOYMENT'S STATUS AND WAIT TILL SUCCESS/FAILURE
+    xopera-rest-deploy-status-csar-test:
+      type: sodalite.nodes.Tests.Text.URI.Response
+      properties:
+        url: { concat: [ get_input: xopera-rest-address,
+                         'info/status?format=long&token=',
+                         get_attribute: [ filter-status-url, output ] ] }
+        comparable_string:  201
+        method:             GET
+        wait_for_code:      true
+        status_code:
+          - 201
+        timeout:            120
+        max_retries:        30
+        retry_delay:      4
+      requirements:
+        - dependency: filter-status-url
+
+    ## UNDEPLOY THE DEPLOYMENT
+    xopera-rest-undeploy-csar-test:
+      type: sodalite.nodes.Tests.Text.URI
+      properties:
+        url: { concat: [ get_input: xopera-rest-address,
+                         'deploy/',
+                         get_attribute: [ filter-update-url, output ] ] }
+        comparable_string:  '.*Undeploy job started*'
+        method:             DELETE
+        regex:              true
+        status_code: 202
+      requirements:
+        - dependency: filter-update-url
+        - dependency: xopera-rest-deploy-status-csar-test
+
+    ## GET SESSION TOKEN FROM THE CSAR UNDEPLOYMENT
+    filter-status-url-undeploy:
+      type: sodalite.nodes.Utils.extract.JSON
+      properties:
+        input:  { get_attribute: [ SELF, input_component, checked_against ] }
+        key:        session_token
+      requirements:
+        - input_component: xopera-rest-undeploy-csar-test
+
+    ## TEST UNDEPLOYMENT STATUS
+    xopera-rest-undeploy-status-csar-test:
+      type: sodalite.nodes.Tests.Text.URI.Response
+      properties:
+        url: { concat: [ get_input: xopera-rest-address,
+                         'info/status?format=long&token=',
+                         get_attribute: [ filter-status-url-undeploy, output ] ] }
+        comparable_string:   201
+        method:             GET
+        wait_for_code:      true
+        status_code:
+          - 201
+        timeout:            120
+        max_retries:        30
+        retry_delay:      4
+      requirements:
+        - dependency: filter-status-url-undeploy
+
+    ## DELETE THE CSAR
+    xopera-rest-delete-csar-test:
+      type: sodalite.nodes.Tests.Text.URI
+      properties:
+#        url:                { get_attribute: [ SELF, input_component, output ] }
+        url: { concat: [ get_input: xopera-rest-address,
+                         'manage/',
+                         get_attribute: [ filter-update-url, output ] ] }
+        comparable_string:  '.*Successfully removed.*'
+        method:             DELETE
+        regex:              true
+      requirements:
+        - dependency: filter-update-url
+        - dependency: xopera-rest-undeploy-status-csar-test
+
+  outputs:
+    root_connect_node:
+      description: Verifies connection by connecting to the root xOpera Rest API endpoint and matching some string on that site
+      value: { get_attribute: [ xopera-rest-test, status ] }
+    public_key_node:
+      description: Verifies if the SSH key endpoint is working
+      value: { get_attribute: [ xopera-rest-public-key-test, status ] }
+    add_node:
+      description: Adds the deployment from the artifacts folder
+      value: { get_attribute: [ xopera-rest-add-csar-test, status ] }
+    modify_node:
+      description: Overrides the already uploaded deployment with the same one
+      value: { get_attribute: [ xopera-rest-modify-csar-test, status ] }
+    deploy_node:
+      description: Deploys the deployment generated using the blueprint builder
+      value: { get_attribute: [ xopera-rest-deploy-csar-test, status ] }
+    deploy_status_node:
+      description: Waits for the deployment to finish and fails if not successful before a timeout
+      value: { get_attribute: [ xopera-rest-deploy-status-csar-test, status ] }
+    undeploy_node:
+      description: Undeploys the deployment
+      value: { get_attribute: [ xopera-rest-undeploy-csar-test, status ] }
+    undeploy_status_node:
+      description: Waits for the undeployment to finish and fails if not successful before a timeout
+      value: { get_attribute: [ xopera-rest-undeploy-status-csar-test, status ] }
+    delete_node:
+      description: Deletes the deployment
+      value: { get_attribute: [ xopera-rest-delete-csar-test, status ] }

@@ -4,7 +4,12 @@
   tasks:
     - name: Execute the tests and catch any errors
       block:
-      - name: Execute the URI request
+      - name: Create the storage directory
+        file:
+          path: "{{ download_directory }}"
+          state: directory
+
+      - name: Download the file using the URI request
         uri:
           url:              "{{ url|default(omit, true) }}"
           attributes:       "{{ attributes|default(omit, true) }}"
@@ -23,25 +28,32 @@
           owner:            "{{ owner|default(omit, true) }}"
           remote_src:       "{{ remote_src|default(omit, true) }}"
           removes:          "{{ removes|default(omit, true) }}"
-          return_content:   yes
+          return_content:   no
           src:              "{{ src|default(omit, true) }}"
           validate_certs:   "{{ validate_certs|default(omit, true) }}"
           status_code:      "{{ status_code|default(omit, true) }}"
           creates:          "{{ creates|default(omit, true) }}"
-          dest:             "{{ dest|default(omit, true) }}"
+          dest:             "{{ (download_directory + filename)|default(omit, true) }}"
           timeout:          "{{ timeout|default(omit, true) }}"
         register: request_result
+        until: "((request_result.status|string) in (status_code|string)) or not wait_for_code"
+        retries: "{{ max_retries }}"
+        delay: "{{ retry_delay }}"
+
+      - name: Read the file
+        shell: cat {{ request_result.path }}
+        register: file_contents
 
       - name: Save returned content and response code
         set_stats:
           data:
-            checked_against: "{{ request_result.url }}"
+            checked_against: "{{ file_contents.stdout }}"
             response_status: "{{ request_result.status }}"
 
       - name: Evaluate the expression
         set_stats:
           data:
-            status: "{{ (not regex and request_result.url == comparable_string) or (regex and request_result.url is regex(comparable_string)) }}"
+            status: "{{ (not regex and file_contents.stdout == comparable_string) or (regex and file_contents.stdout is regex(comparable_string)) }}"
       rescue:
         - name: If the request fails set status to false
           set_stats:

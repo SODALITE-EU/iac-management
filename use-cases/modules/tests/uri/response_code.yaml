@@ -23,6 +23,7 @@
           owner:            "{{ owner|default(omit, true) }}"
           remote_src:       "{{ remote_src|default(omit, true) }}"
           removes:          "{{ removes|default(omit, true) }}"
+          validate_certs:   "{{ validate_certs|default(omit, true) }}"
           return_content:   yes
           src:              "{{ src|default(omit, true) }}"
           status_code:      "{{ status_code|default(omit, true) }}"
@@ -30,6 +31,9 @@
           dest:             "{{ dest|default(omit, true) }}"
           timeout:          "{{ timeout|default(omit, true) }}"
         register: request_result
+        until: "((request_result.status|string) in (status_code|string)) or not wait_for_code"
+        retries: "{{ max_retries }}"
+        delay: "{{ retry_delay }}"
 
       - name: Save returned content and response code
         set_stats:

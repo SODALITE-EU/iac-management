@@ -1,0 +1,63 @@
+# baseURI: https://www.sodalite.eu/ontologies/exchange/rm/
+# imports: https://www.sodalite.eu/ontologies/exchange/
+
+@prefix : <https://www.sodalite.eu/ontologies/exchange/rm/> .
+@prefix exchange: <https://www.sodalite.eu/ontologies/exchange/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:
+  rdf:type owl:Ontology ;
+  owl:imports exchange: ;
+  owl:versionInfo "Created by the SODALITE IDE" ;
+.
+
+:RM_1
+  rdf:type exchange:RM ;
+  exchange:userId "27827d44-0f6c-11ea-8d71-362b9e155667" ;
+.
+
+	
+
+
+
+
+:Parameter_1
+  rdf:type exchange:Parameter ;
+  exchange:name "type" ;
+  exchange:value 'string' ;
+.
+
+:Parameter_2
+  rdf:type exchange:Parameter ;
+  exchange:name "required" ;
+  exchange:value 'false' ;
+.
+
+
+
+
+
+
+:Property_1
+  rdf:type exchange:Property ;
+  exchange:name "username" ;
+  exchange:hasParameter :Parameter_1 ;
+  exchange:hasParameter :Parameter_2 ;
+.
+
+
+
+
+
+:NodeType_1
+  rdf:type exchange:NodeType ;
+  exchange:name "sodalite.nodes.Compute" ;
+  exchange:derivesFrom "tosca.nodes.Compute" ;
+  exchange:properties :Property_1 ; 
+.  
+
+
+
