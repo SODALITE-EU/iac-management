@@ -1,7 +1,7 @@
-# baseURI: https://www.sodalite.eu/ontologies/exchange/sodalite/
+# baseURI: https://www.sodalite.eu/ontologies/exchange/sodalite-test/
 # imports: https://www.sodalite.eu/ontologies/exchange/
 
-@prefix : <https://www.sodalite.eu/ontologies/exchange/sodalite/> .
+@prefix : <https://www.sodalite.eu/ontologies/exchange/sodalite-test/> .
 @prefix exchange: <https://www.sodalite.eu/ontologies/exchange/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -84,6 +84,16 @@
   exchange:value "fixme" ;
 .
 
+:Attribute_1
+  rdf:type exchange:Attribute ;
+  exchange:name "private_address" ;
+  exchange:value "{ get_input: docker-host-ip }" ;
+.
+:Attribute_2
+  rdf:type exchange:Attribute ;
+  exchange:name "public_address" ;
+  exchange:value "{ get_input: docker-host-ip }" ;
+.
 
 :Requirement_1
   rdf:type exchange:Requirement ;
@@ -112,6 +122,8 @@
   exchange:name "sodalite-vm" ;
   exchange:type "sodalite.nodes.Compute" ;
   exchange:properties :Property_1 ;
+  exchange:attributes :Attribute_1 ;
+  exchange:attributes :Attribute_2 ;
 .  
 :Template_2
   rdf:type exchange:Template ;
