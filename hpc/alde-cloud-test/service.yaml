@@ -1,0 +1,47 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+node_types:
+  alde_api_type:
+    derived_from: tosca.nodes.SoftwareComponent
+    interfaces:
+      Standard:
+        inputs:
+          alde_host:
+            default: { get_input: alde_host }
+            type: string
+          app_name:
+            default: { get_input: app_name }
+            type: string
+          pbs_path:
+            default: { get_input: pbs_path }
+            type: string
+          testbed_id:
+            default: { get_input: testbed_id }
+            type: string
+
+        operations:
+          create: playbooks/create.yaml
+
+topology_template:
+  inputs:
+    alde_host:
+      type: string
+    app_name:
+      type: string
+    pbs_path:
+      type: string
+    testbed_id:
+      type: string
+
+
+  node_templates:
+    local-workstation:
+      type: tosca.nodes.Compute
+      attributes:
+        private_address: localhost
+        public_address: localhost
+
+    alde_api:
+      type: alde_api_type
+      requirements:
+        - host: local-workstation
