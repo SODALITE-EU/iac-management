@@ -1,0 +1,4 @@
+alde_host: http://192.168.2.20:5000
+app_name: tosca-test
+pbs_path: jobs/test.pbs
+testbed_id: "1"
