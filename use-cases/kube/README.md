@@ -2,7 +2,7 @@
 
 The example does the following:
 
-- Creates nginx deployment via properties
+- Creates nginx deployment via Deployment Kind
 - Creates another nginx deployment via Kubernetes definition file
 - Creates mysql deployment via Helm
 
@@ -76,3 +76,7 @@ To undeploy:
 ```
 opera undeploy
 ```
+
+## Misc
+
+The `kubernetes/kubernetes_definitions.yaml` file is generated using [Kubernetes Reference Docs Generator](https://github.com/kmlTE/reference-docs) and the current version is derived from v1_18 of the spec. The kubernetes module currently supports the following Kubernetes Kinds: *Deployment, ServiceAccount, ClusterRole, ClusterRoleBinding, Namespace, DaemonSet*.
