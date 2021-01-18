@@ -1,0 +1,4 @@
+hlrs-frontend-address: sodalite-fe.hlrs.de
+username: 
+# not needed if there is an ssh_config
+ssh-key-location:
