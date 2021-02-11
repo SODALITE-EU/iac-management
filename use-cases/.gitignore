@@ -2,3 +2,5 @@
 clinical-uc/**/artifacts
 
 .venv
+
+*/**/.opera

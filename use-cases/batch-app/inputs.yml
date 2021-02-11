@@ -1,4 +1,32 @@
-hlrs-frontend-address: sodalite-fe.hlrs.de
-username: 
-# not needed if there is an ssh_config
-ssh-key-location:
+# egi inputs
+egi-ssh-key-name:
+egi-ssh-public-key:
+egi-image-name:
+openstack-network-name:
+openstack-floating-ip-pool:
+egi-security-groups:
+egi-flavor-name:
+egi-vm-username:
+egi-env:
+  checkin_env:
+    CHECKIN_CLIENT_ID:
+    CHECKIN_CLIENT_SECRET:
+    CHECKIN_REFRESH_TOKEN:
+    EGI_SITE:
+
+# hlrs inputs
+hlrs-frontend-address:
+hlrs-username:
+
+# aws inputs
+aws-ssh-key-name:
+aws-ssh-public-key:
+vpc-id:
+region:
+vpc-subnet-id:
+aws-access-key:
+aws-secret-key:
+aws-image-name:
+aws-security-groups:
+aws-flavor-name:
+aws-vm-username:

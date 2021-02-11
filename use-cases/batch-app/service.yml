@@ -3,26 +3,120 @@ tosca_definitions_version: tosca_simple_yaml_1_3
 imports:
   - modules/hpc/app/apps.yml
   - modules/hpc/app/workflows.yml
+  - modules/openstack/openstack_keypair.yaml
+  - modules/openstack/openstack_security_rule.yaml
+  - modules/openstack/openstack_vm.yaml
+  - modules/aws/aws_keypair.yaml
+  - modules/aws/aws_security_rule.yaml
+  - modules/aws/aws_vm.yaml
 
 topology_template:
 
   inputs:
+    egi-ssh-key-name:  
+      type: string 
+    egi-ssh-public-key:  
+      type: string 
+    egi-image-name:  
+      type: string 
+    openstack-network-name:  
+      type: string 
+    openstack-floating-ip-pool:  
+      type: string 
+    egi-security-groups:  
+      type: string    
+    egi-flavor-name:  
+      type: string
+    egi-vm-username:
+      type: string 
+    egi-env:
+      type: map 
+    
     hlrs-frontend-address:
       type: string
-    username:
+    hlrs-username:
       type: string
-    ssh-key-location:
-      type: string
+
+    aws-ssh-key-name:  
+      type: string 
+    aws-ssh-public-key:  
+      type: string 
+    vpc-id:  
+      type: string 
+    region:  
+      type: string 
+    vpc-subnet-id:  
+      type: string 
+    aws-access-key:  
+      type: string 
+    aws-secret-key:  
+      type: string 
+
+    aws-image-name:  
+      type: string 
+    aws-security-groups:  
+      type: list 
+    aws-flavor-name:  
+      type: string 
+    aws-vm-username:  
+      type: string 
 
   node_templates:
 
-    # discovered by PDS
+### egi resources and runtime descriptions
+    # should have xOpera public key
+    egi-keypair:
+      type: sodalite.nodes.OpenStack.Keypair
+      properties:  
+        name: { get_input: egi-ssh-key-name } 
+        public_key: { get_input: egi-ssh-public-key } 
+        env: { get_input: egi-env } 
+
+    egi-security-rules-ssh:  
+      type: sodalite.nodes.OpenStack.SecurityRules 
+      properties:  
+        ports:  
+          ssh:  
+            protocol: tcp 
+            remote_ip_prefix: 0.0.0.0/0 
+            port_range_min: 22 
+            port_range_max: 22
+        group_name: ssh
+        group_description: SSH
+        env: { get_input: egi-env } 
+
+    egi-vm:  
+      type: sodalite.nodes.OpenStack.VM 
+      properties:  
+        name:  egi-vm
+        key_name:         { get_input: egi-ssh-key-name } 
+        image:            { get_input: egi-image-name }
+        network:          { get_input: openstack-network-name } 
+        security_groups:  { get_input: egi-security-groups } 
+        flavor:           { get_input: egi-flavor-name }
+        username:         { get_input: egi-vm-username }
+        include_exporter: false
+        timeout: 666
+        floating_ip_pools: { get_input: openstack-floating-ip-pool } 
+        env: { get_input: egi-env } 
+      requirements:  
+        - protected_by: egi-security-rules-ssh
+        - dependency: egi-keypair
+
+    egi-batch-runtime:
+      type: sodalite.nodes.batch.Container.Runtime
+      properties:
+        runtime: "singularity"
+        images_location: "images"
+      requirements:
+        - host: egi-vm
+
+### hlrs resources and runtime descriptions
     hlrs-testbed:
       type: sodalite.nodes.hpc.WM
       properties:
         scheduler: torque
-        username: { get_input: username }
-        ssh-key: { get_input: ssh-key-location }
+        username: { get_input: hlrs-username }
       attributes:
         public_address: { get_input: hlrs-frontend-address }
       capabilities:
@@ -45,6 +139,57 @@ topology_template:
       requirements:
         - host: hlrs-testbed
 
+### aws resources and runtime descriptions
+    aws-keypair:
+      type: sodalite.nodes.AWS.Keypair
+      properties:  
+        name: { get_input: aws-ssh-key-name } 
+        public_key: { get_input: aws-ssh-public-key } 
+        region:                 { get_input: region } 
+        aws_access_key:         { get_input: aws-access-key } 
+        aws_secret_key:         { get_input: aws-secret-key }  
+
+    aws-security-rules-ssh:  
+      type: sodalite.nodes.AWS.SecurityRules 
+      properties:  
+        rules:  
+        - to_port: 22 
+          cidr_ip: 0.0.0.0/0 
+          from_port: 22 
+          proto: tcp 
+        group_name: ssh
+        group_description: SSH
+        vpc_id:                 { get_input: vpc-id } 
+        region:                 { get_input: region } 
+        aws_access_key:         { get_input: aws-access-key } 
+        aws_secret_key:         { get_input: aws-secret-key }       
+
+    aws-vm:  
+      type: sodalite.nodes.AWS.VM 
+      properties:  
+        name:  aws-vm-1
+        key_name:         { get_input: aws-ssh-key-name } 
+        image:            { get_input: aws-image-name }
+        network:          { get_input: vpc-subnet-id } 
+        security_groups:  { get_input: aws-security-groups } 
+        flavor:                  { get_input: aws-flavor-name }
+        username:                { get_input: aws-vm-username }
+        region:                  { get_input: region } 
+        aws_access_key:          { get_input: aws-access-key } 
+        aws_secret_key:          { get_input: aws-secret-key } 
+      requirements:  
+        - protected_by: aws-security-rules-ssh
+        - dependency: aws-keypair
+
+    aws-batch-runtime:
+      type: sodalite.nodes.batch.Container.Runtime
+      properties:
+        runtime: "singularity"
+        images_location: "images"
+      requirements:
+        - host: aws-vm
+
+### application description
     batch-app-1:
       type: sodalite.nodes.batch.Container.Application
       # optimization: ai_training.tensor_flow # from AADM, comes as JSON-string to IaC Builder
@@ -133,7 +278,61 @@ topology_template:
         - runtime: batch-app-runtime-hpc
         - host: hlrs-testbed
 
+    batch-app-3:
+      type: sodalite.nodes.batch.Container.Application
+      # optimization: ai_training.tensor_flow # from AADM, comes as JSON-string to IaC Builder
+      properties:
+        app_tag: "batch-app-3"
+        app_type: "python"
+        executable: "python --version > test.out"
+        arguments: ""
+        container_runtime: "docker://python" # default container runtime. Might be substituted by IaCBuilder based on optimization
+      requirements:
+        - runtime: egi-batch-runtime
+        - host: egi-vm
 
+    batch-job-3:
+      type: sodalite.nodes.batch.Container.BatchExecution
+      properties:
+        workspace: ~/batch-app
+        # from IaCBuilder
+        content: "#!/bin/bash\n\nsleep 20\n\nsingularity exec $SINGULARITY_DIR/python.sif  python --version > test.out\n"
+        # content: "#!/bin/bash\n\nsleep 20\n\nsingularity exec $SINGULARITY_DIR/python.sif  python --version > test.out\nexit 1\n"
+      attributes:
+        env:
+          SOME_VAR: "SOME_VALUE"
+      requirements:
+        - application: batch-app-3
+        - runtime: egi-batch-runtime
+        - host: egi-vm
+
+    batch-app-4:
+      type: sodalite.nodes.batch.Container.Application
+      # optimization: ai_training.tensor_flow # from AADM, comes as JSON-string to IaC Builder
+      properties:
+        app_tag: "batch-app-4"
+        app_type: "python"
+        executable: "python --version > test.out"
+        arguments: ""
+        container_runtime: "docker://python" # default container runtime. Might be substituted by IaCBuilder based on optimization
+      requirements:
+        - runtime: aws-batch-runtime
+        - host: aws-vm
+
+    batch-job-4:
+      type: sodalite.nodes.batch.Container.BatchExecution
+      properties:
+        workspace: ~/batch-app
+        # from IaCBuilder
+        content: "#!/bin/bash\n\nsleep 20\n\nsingularity exec $SINGULARITY_DIR/python.sif  python --version > test.out\n"
+        # content: "#!/bin/bash\n\nsleep 20\n\nsingularity exec $SINGULARITY_DIR/python.sif  python --version > test.out\nexit 1\n"
+      attributes:
+        env:
+          SOME_VAR: "SOME_VALUE"
+      requirements:
+        - application: batch-app-4
+        - runtime: aws-batch-runtime
+        - host: aws-vm
 
 ### job workflow
     workflow-elem-1:
@@ -160,3 +359,29 @@ topology_template:
       requirements:
         - job: workflow-elem-2
         - host: hlrs-testbed
+
+    workflow-elem-3:
+      type: sodalite.nodes.workflow.Job
+      requirements:
+        - execution: batch-job-3
+        - host: egi-vm
+        - dependency: workflow-elem-result-2
+
+    workflow-elem-result-3:
+      type: sodalite.nodes.workflow.Result
+      requirements:
+        - job: workflow-elem-3
+        - host: egi-vm
+
+    workflow-elem-4:
+      type: sodalite.nodes.workflow.Job
+      requirements:
+        - execution: batch-job-4
+        - host: aws-vm
+        - dependency: workflow-elem-result-3
+
+    workflow-elem-result-4:
+      type: sodalite.nodes.workflow.Result
+      requirements:
+        - job: workflow-elem-4
+        - host: aws-vm
