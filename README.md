@@ -7,7 +7,7 @@ The abstract deployment models are converted to intermediate IaC (TOSCA/Ansible)
 
 This repository contains the sample deployment blueprints for the SODALITE openstack cloud and HPC testbeds, as well as the initial deployments blueprints for demostrating use cases featured in the SODALITE project. 
 
-NOTE: SODALITE currently uses the version xOpera version 0.1.7 since xOpera is beeing developed to support OASIS TOSCA Simple Profile in YAML version 1.3 standard currently in Public Review Draft.
+NOTE: SODALITE currently uses the version xOpera version 0.6.4 supporting the latest OASIS TOSCA Simple Profile in YAML version 1.3 standard.
 
 ## Prerequisites
 The simplest way to run xOpera is to install it into virtual environment with openstack client setup:
