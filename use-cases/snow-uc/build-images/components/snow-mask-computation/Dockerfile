@@ -12,7 +12,7 @@ WORKDIR SnowWatch-SODALITE/SnowMaskComputation/service/
 RUN apt update && \
     apt install -y python3-pip && \
     apt install -y libgl1-mesa-glx && \
-    apt install libglib2.0-0 && \
+    apt install -y libglib2.0-0 && \
     pip3 install --upgrade pip && \
     pip3 install -r requirements.txt
 
