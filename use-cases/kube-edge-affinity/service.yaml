@@ -1,0 +1,171 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - modules/kubernetes/main.yaml
+
+topology_template:
+
+  inputs:
+    frontend_address:
+      type: string
+      default: ""
+    frontend_user:
+      type: string
+      default: ""
+
+  node_templates:
+
+    edge-kubernetes-frontend:
+      type: sodalite.nodes.Kubernetes.Cluster
+      properties:
+        kubeconfig: ~/.kube/config
+        username: { get_input: frontend_user }  
+      attributes: 
+        public_address: { get_input: frontend_address }    
+
+    # Discovered by PDS
+    node-jetson-nano: 
+      type: sodalite.nodes.Kubernetes.Node
+      properties:
+        name: jetson-nano
+        annotations:
+          node.alpha.kubernetes.io/ttl: '0'
+          volumes.kubernetes.io/controller-managed-attach-detach: 'true'
+        labels:
+          beta.devicetree.org/nvidia-jetson-nano: '1'
+          beta.devicetree.org/nvidia-tegra210: '1'
+          beta.kubernetes.io/arch: arm64
+          beta.kubernetes.io/instance-type: k3s
+          beta.kubernetes.io/os: linux
+          k3s.io/hostname: jetson-nano
+          kubernetes.io/arch: arm64
+          kubernetes.io/hostname: jetson-nano
+          kubernetes.io/os: linux
+        ready_status: False
+        gpus: 1
+        gpu_selector: { "key": "beta.devicetree.org/nvidia-jetson-nano", "value": "1" }
+        cpus: 1
+        arm64_cpus: 1
+
+    node-jumping-mole: 
+      type: sodalite.nodes.Kubernetes.Node
+      properties:
+        name: jumping-mole
+        annotations:
+          node.alpha.kubernetes.io/ttl: '0'
+          volumes.kubernetes.io/controller-managed-attach-detach: 'true'
+        labels:
+          beta.kubernetes.io/arch: arm64
+          beta.kubernetes.io/instance-type: k3s
+          beta.kubernetes.io/os: linux
+          kubernetes.io/arch: arm64
+          kubernetes.io/hostname: jumping-mole
+          kubernetes.io/os: linux
+        ready_status: False
+        cpus: 1
+        arm64_cpus: 1
+
+    node-filesrv: 
+      type: sodalite.nodes.Kubernetes.Node
+      properties:
+        name: filesrv
+        annotations:
+          node.alpha.kubernetes.io/ttl: '0'
+          volumes.kubernetes.io/controller-managed-attach-detach: 'true'
+        labels:
+          beta.kubernetes.io/arch: amd64
+          beta.kubernetes.io/instance-type: k3s
+          beta.kubernetes.io/os: linux
+          kubernetes.io/arch: amd64
+          kubernetes.io/hostname: filesrv
+          kubernetes.io/os: linux
+        ready_status: True
+        cpus: 1
+        amd64_cpus: 1
+
+    node-sgx-celsius-w550power: 
+      type: sodalite.nodes.Kubernetes.Node
+      properties:
+        name: sgx-celsius-w550power
+        annotations:
+          node.alpha.kubernetes.io/ttl: '0'
+          volumes.kubernetes.io/controller-managed-attach-detach: 'true'
+        labels:
+          accelerators/ncs2: 'true'
+          beta.kubernetes.io/arch: amd64
+          beta.kubernetes.io/instance-type: k3s
+          beta.kubernetes.io/os: linux
+          intel.com/ncs2: '1'
+          kkohtaka.org/edgetpu: 'true'
+          kubernetes.io/arch: amd64
+          kubernetes.io/hostname: sgx-celsius-w550power
+          kubernetes.io/os: linux
+          ncs2.intel.com/MYRIAD.FP16: 'true'
+          sodalite.eu/edgetpu: 'true'
+        ready_status: True
+        edgetpus: 1
+        edgetpu_selector: { "key": "accelerators/ncs2", "value": "true" }
+        cpus: 1
+        amd64_cpus: 1
+
+    node-xavier-nx: 
+      type: sodalite.nodes.Kubernetes.Node
+      properties:
+        name: xavier-nx
+        annotations:
+          node.alpha.kubernetes.io/ttl: '0'
+          volumes.kubernetes.io/controller-managed-attach-detach: 'true'
+        labels:
+          beta.devicetree.org/nvidia-tegra194: '1'
+          beta.kubernetes.io/arch: arm64
+          beta.kubernetes.io/instance-type: k3s
+          beta.kubernetes.io/os: linux
+          kubernetes.io/arch: arm64
+          kubernetes.io/hostname: xavier-nx
+          kubernetes.io/os: linux
+        ready_status: True
+        gpus: 1
+        gpu_selector: { "key": "accelerators/gpu", "value": "true" }
+        cpus: 1
+        arm64_cpus: 1
+
+    ####################################################
+    # Helm Specific-Node
+    ####################################################
+    mysql-deployment-via-helm-on-edgetpu:
+      type: sodalite.nodes.Kubernetes.Definition.Helm.Node
+      properties:
+        name: mysql-release-1-from-helm-on-edgetpu
+        namespace: default
+        chart: stable/mysql
+        chart_version: latest
+        repo_name: stable
+        repo_url: "https://charts.helm.sh/stable"
+        keep_repo: false
+        values:
+          replicas: 1
+          persistence:
+            enabled: False
+      requirements:
+        - host: edge-kubernetes-frontend
+        - kube_node: node-sgx-celsius-w550power
+        # - kube_node: node-filesrv
+
+    mysql-deployment-via-helm-on-cpu:
+      type: sodalite.nodes.Kubernetes.Definition.Helm.Node
+      properties:
+        name: mysql-release-1-from-helm-on-cpu
+        namespace: default
+        chart: stable/mysql
+        chart_version: latest
+        repo_name: stable
+        repo_url: "https://charts.helm.sh/stable"
+        keep_repo: false
+        values:
+          replicas: 1
+          persistence:
+            enabled: False
+      requirements:
+        - host: edge-kubernetes-frontend
+        - kube_node: node-filesrv
+        # - kube_node: node-sgx-celsius-w550power
