@@ -43,7 +43,7 @@ topology_template:
           kubernetes.io/os: linux
         ready_status: False
         gpus: 1
-        gpu_selector: { "key": "beta.devicetree.org/nvidia-jetson-nano", "value": "1" }
+        gpu_selector: { "key": "accelerators/gpu", "value": "true" }
         cpus: 1
         arm64_cpus: 1
 
