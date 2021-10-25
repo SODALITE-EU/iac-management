@@ -19,7 +19,7 @@ topology_template:
     NIFI_API_ACCESS_TOKEN:
       type: string
     NIFI_API_VALIDATE_CERTS:
-      type: string
+      type: boolean
 
   node_templates:
 
