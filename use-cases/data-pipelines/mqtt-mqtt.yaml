@@ -1,0 +1,52 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - modules/data-pipelines/mqtt.yaml
+
+topology_template:
+
+  inputs:
+    mqtt_broker_uri:
+      type: string
+    mqtt_topic:
+      type: string
+    mqtt_username:
+      type: string
+    mqtt_password:
+      type: string
+    NIFI_ENDPOINT:
+      type: string
+    NIFI_API_ENDPOINT:
+      type: string
+    NIFI_API_ACCESS_TOKEN:
+      type: string
+    NIFI_API_VALIDATE_CERTS:
+      type: boolean
+
+  node_templates:
+
+    mqtt-consumer:
+      type: sodalite.nodes.datapipeline.Consumer.MQTT
+      properties:
+        name: "My MQTT Consumer"
+        canvas_layout:
+          origin_X: 600.0
+          origin_Y: 600.0
+        BrokerURI: { get_input: mqtt_broker_uri }
+        Topic: "test-con-topic"
+        Username: { get_input: mqtt_username }
+        Password: { get_input: mqtt_password }
+      requirements:
+        - connectToPipeline: mqtt-publisher
+
+    mqtt-publisher:
+      type: sodalite.nodes.datapipeline.Publisher.MQTT
+      properties:
+        name: "My MQTT Publisher"
+        canvas_layout:
+          origin_X: 1500.0
+          origin_Y: 600.0
+        BrokerURI: { get_input: mqtt_broker_uri }
+        Topic: "test-pub-topic"
+        Username: { get_input: mqtt_username }
+        Password: { get_input: mqtt_password }

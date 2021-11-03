@@ -1,6 +1,11 @@
-minio_access_key: TEST_ACCESS_KEY
-minio_secret_key: TEST_SECRET_KEY
-minio_endpoint: http://minio.cluster:9000
+# minio_access_key: TEST_ACCESS_KEY
+# minio_secret_key: TEST_SECRET_KEY
+# minio_endpoint: http://minio.cluster:9000
+
+mqtt_broker_uri: tcp://mqtt.broker:1883
+mqtt_topic: test-topic
+mqtt_username: TEST_ACCESS_KEY
+mqtt_password: TEST_SECRET_KEY
 
 NIFI_ENDPOINT: https://nifi01.nifi.cluster:9543
 NIFI_API_ENDPOINT: https://nifi01.nifi.cluster:9543/nifi-api
