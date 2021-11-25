@@ -1,0 +1,18 @@
+gridftp_host: sodalite-fe.hlrs.de
+gridftp_port: 2811
+gridftp_username: kamil
+gridftp_src_path: ~/gridftp_src
+gridftp_dst_path: ~/gridftp_dst
+gridftp_usercert: |
+  -----BEGIN CERTIFICATE-----
+  ...
+  -----END CERTIFICATE-----
+gridftp_userkey: |
+  -----BEGIN PRIVATE KEY-----
+  ...
+  -----END PRIVATE KEY-----
+
+NIFI_ENDPOINT: https://nifi01.nifi.cluster:9543
+NIFI_API_ENDPOINT: https://nifi01.nifi.cluster:9543/nifi-api
+NIFI_API_ACCESS_TOKEN: eyJra...
+NIFI_API_VALIDATE_CERTS: false
