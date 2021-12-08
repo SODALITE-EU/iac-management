@@ -66,7 +66,7 @@ topology_template:
           url: "$.url"
           lat: "$.lat"
           lng: "$.lng"
-        Filename: "${id:append('_'):append(${now():format('yyyy_MM_dd_HH_mm')}):append('.jpg')}"
+        Filename: "${id:append('/'):append(${id}):append('_'):append(${now():format('yyyy_MM_dd_HH_mm')}):append('.jpg')}"
       requirements:
         - connectToPipeline: s3-json-publisher
 
