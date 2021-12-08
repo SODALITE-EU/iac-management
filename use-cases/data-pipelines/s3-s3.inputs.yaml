@@ -1,0 +1,8 @@
+minio_access_key: TEST_ACCESS_KEY
+minio_secret_key: TEST_SECRET_KEY
+minio_endpoint: http://minio.cluster:9000
+
+NIFI_ENDPOINT: https://nifi01.nifi.cluster:9543
+NIFI_API_ENDPOINT: https://nifi01.nifi.cluster:9543/nifi-api
+NIFI_API_ACCESS_TOKEN: 
+NIFI_API_VALIDATE_CERTS: false

@@ -1,0 +1,9 @@
+mqtt_broker_uri: tcp://mqtt.broker:1883
+mqtt_topic: test-topic
+mqtt_username: TEST_ACCESS_KEY
+mqtt_password: TEST_SECRET_KEY
+
+NIFI_ENDPOINT: https://nifi01.nifi.cluster:9543
+NIFI_API_ENDPOINT: https://nifi01.nifi.cluster:9543/nifi-api
+NIFI_API_ACCESS_TOKEN: 
+NIFI_API_VALIDATE_CERTS: false

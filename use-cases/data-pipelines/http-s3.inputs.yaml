@@ -1,0 +1,81 @@
+url_text_list: |
+  http://images-webcams.windy.com/83/1011371583/current/full/1011371583.jpg
+  http://images-webcams.windy.com/71/1012331371/current/full/1012331371.jpg
+  http://images-webcams.windy.com/78/1022924078/current/full/1022924078.jpg
+  http://images-webcams.windy.com/64/1048419764/current/full/1048419764.jpg
+  http://images-webcams.windy.com/63/1248707363/current/full/1248707363.jpg
+  http://images-webcams.windy.com/90/1259758990/current/full/1259758990.jpg
+  http://images-webcams.windy.com/03/1292513603/current/full/1292513603.jpg
+  http://images-webcams.windy.com/72/1292514672/current/full/1292514672.jpg
+  http://images-webcams.windy.com/21/1296779621/current/full/1296779621.jpg
+  http://images-webcams.windy.com/00/1357201500/current/full/1357201500.jpg
+
+url_object_list:
+  - id: 34
+    name: "Vorab Gletscher Panorama"
+    url: "http://images-webcams.windy.com/83/1011371583/current/full/1011371583.jpg"
+    lat: 46.8733
+    lng: 9.18122
+
+  - id: 40
+    name: "Savognin, Savoldellis Berghaus Radons"
+    url: "http://images-webcams.windy.com/71/1012331371/current/full/1012331371.jpg"
+    lat: 46.5596
+    lng: 9.5533
+
+  - id: 50
+    name: "Wetterhorn"
+    url: "http://images-webcams.windy.com/78/1022924078/current/full/1022924078.jpg"
+    lat: 46.6194
+    lng: 8.02483
+
+  - id: 62
+    name: "Villars - Petit Chamossaire 360° Panorama"
+    url: "http://images-webcams.windy.com/64/1048419764/current/full/1048419764.jpg"
+    lat: 46.3317
+    lng: 7.0667
+
+  - id: 608
+    name: "Kamera Richtung \"Höchturm\" und \"Ortstock\""
+    url: "http://images-webcams.windy.com/63/1248707363/current/full/1248707363.jpg"
+    lat: 46.917
+    lng: 8.89103
+
+  - id: 666
+    name: "Silvretta Montafon - Valisera Hüsli"
+    url: "http://images-webcams.windy.com/90/1259758990/current/full/1259758990.jpg"
+    lat: 46.9851
+    lng: 9.9652
+
+  - id: 822
+    name: "Mutta Rodunda"
+    url: "http://images-webcams.windy.com/03/1292513603/current/full/1292513603.jpg"
+    lat: 46.856
+    lng: 9.2247
+
+  - id: 852
+    name: "Skigebiet Brigels Waltensburg Andiast / Bergstation Fil"
+    url: "http://images-webcams.windy.com/72/1292514672/current/full/1292514672.jpg"
+    lat: 46.8067
+    lng: 9.0608
+
+  - id: 943
+    name: "Adelboden Live Webcam Wetter vom Chefihuesi.ch"
+    url: "http://images-webcams.windy.com/21/1296779621/current/full/1296779621.jpg"
+    lat: 46.489
+    lng: 7.55339
+
+  - id: 1307
+    name: "Interaktive 360°-Webcam Grindelwald-First"
+    url: "http://images-webcams.windy.com/00/1357201500/current/full/1357201500.jpg"
+    lat: 46.6619
+    lng: 8.06208
+
+minio_access_key: TEST_ACCESS_KEY
+minio_secret_key: TEST_SECRET_KEY
+minio_endpoint: http://minio.cluster:9000
+
+NIFI_ENDPOINT: https://nifi01.nifi.cluster:9543
+NIFI_API_ENDPOINT: https://nifi01.nifi.cluster:9543/nifi-api
+NIFI_API_ACCESS_TOKEN:
+NIFI_API_VALIDATE_CERTS: false
