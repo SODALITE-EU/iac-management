@@ -1,0 +1,24 @@
+mqtt_broker_uri: tcp://mqtt.broker:1883
+mqtt_topic: knowgo
+mqtt_username: 
+mqtt_password: 
+
+minio_access_key: kamil
+minio_secret_key: 
+minio_endpoint: 
+
+gridftp_host: sodalite-fe.hlrs.de
+gridftp_port: 2811
+gridftp_username: kamil
+gridftp_dst_path: ~/vehicle_uc_events
+gridftp_usercert: |
+  -----BEGIN CERTIFICATE-----
+  -----END CERTIFICATE-----
+gridftp_userkey: |
+  -----BEGIN PRIVATE KEY-----
+  -----END PRIVATE KEY-----
+
+NIFI_ENDPOINT: https://nifi01.nifi.cluster:9543
+NIFI_API_ENDPOINT: https://nifi01.nifi.cluster:9543/nifi-api
+NIFI_API_ACCESS_TOKEN: 
+NIFI_API_VALIDATE_CERTS: false

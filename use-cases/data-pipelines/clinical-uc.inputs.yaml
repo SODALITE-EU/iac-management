@@ -1,0 +1,67 @@
+dataset_list: |
+  https://dataverse.harvard.edu/api/access/datafile/4264835
+  https://dataverse.harvard.edu/api/access/datafile/4266987
+  https://dataverse.harvard.edu/api/access/datafile/4266981
+  https://dataverse.harvard.edu/api/access/datafile/4411736
+  https://dataverse.harvard.edu/api/access/datafile/4411734
+  https://dataverse.harvard.edu/api/access/datafile/4411735
+  https://dataverse.harvard.edu/api/access/datafile/4411737
+  https://dataverse.harvard.edu/api/access/datafile/4411741
+  https://dataverse.harvard.edu/api/access/datafile/4411740
+  https://dataverse.harvard.edu/api/access/datafile/4411739
+  https://dataverse.harvard.edu/api/access/datafile/4411738
+  https://dataverse.harvard.edu/api/access/datafile/4411793
+  https://dataverse.harvard.edu/api/access/datafile/4411795
+  https://dataverse.harvard.edu/api/access/datafile/4267510
+  https://dataverse.harvard.edu/api/access/datafile/4411472
+  https://dataverse.harvard.edu/api/access/datafile/4411471
+  https://dataverse.harvard.edu/api/access/datafile/4411470
+  https://dataverse.harvard.edu/api/access/datafile/4411469
+  https://dataverse.harvard.edu/api/access/datafile/4411475
+  https://dataverse.harvard.edu/api/access/datafile/4411476
+  https://dataverse.harvard.edu/api/access/datafile/4411482
+  https://dataverse.harvard.edu/api/access/datafile/4411558
+  https://dataverse.harvard.edu/api/access/datafile/4411559
+  https://dataverse.harvard.edu/api/access/datafile/4411557
+  https://dataverse.harvard.edu/api/access/datafile/4267599
+  https://dataverse.harvard.edu/api/access/datafile/4411796
+  https://dataverse.harvard.edu/api/access/datafile/4411560
+  https://dataverse.harvard.edu/api/access/datafile/4411563
+  https://dataverse.harvard.edu/api/access/datafile/4411562
+  https://dataverse.harvard.edu/api/access/datafile/4411561
+  https://dataverse.harvard.edu/api/access/datafile/4411564
+  https://dataverse.harvard.edu/api/access/datafile/4411565
+  https://dataverse.harvard.edu/api/access/datafile/4411566
+  https://dataverse.harvard.edu/api/access/datafile/4411794
+  https://dataverse.harvard.edu/api/access/datafile/4411797
+  https://dataverse.harvard.edu/api/access/datafile/4267550
+  https://dataverse.harvard.edu/api/access/datafile/4411407
+  https://dataverse.harvard.edu/api/access/datafile/4411408
+  https://dataverse.harvard.edu/api/access/datafile/4411406
+  https://dataverse.harvard.edu/api/access/datafile/4411405
+  https://dataverse.harvard.edu/api/access/datafile/4411417
+  https://dataverse.harvard.edu/api/access/datafile/4411414
+  https://dataverse.harvard.edu/api/access/datafile/4411415
+  https://dataverse.harvard.edu/api/access/datafile/4411416
+  https://dataverse.harvard.edu/api/access/datafile/4411420
+  https://dataverse.harvard.edu/api/access/datafile/4411419
+  https://dataverse.harvard.edu/api/access/datafile/4267523
+  https://dataverse.harvard.edu/api/access/datafile/4410885
+  https://dataverse.harvard.edu/api/access/datafile/4410886
+  https://dataverse.harvard.edu/api/access/datafile/4411396
+
+gridftp_host: sodalite-fe.hlrs.de
+gridftp_port: 2811
+gridftp_username: kamil
+gridftp_dst_path: ~/clinical_uc_dataset
+gridftp_usercert: |
+  -----BEGIN CERTIFICATE-----
+  -----END CERTIFICATE-----
+gridftp_userkey: |
+  -----BEGIN PRIVATE KEY-----
+  -----END PRIVATE KEY-----
+
+NIFI_ENDPOINT: https://nifi01.nifi.cluster:9543
+NIFI_API_ENDPOINT: https://nifi01.nifi.cluster:9543/nifi-api
+NIFI_API_ACCESS_TOKEN: 
+NIFI_API_VALIDATE_CERTS: false

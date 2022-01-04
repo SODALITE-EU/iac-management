@@ -1,0 +1,108 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+imports:
+  - modules/data-pipelines/mqtt.yaml
+  - modules/data-pipelines/s3.yaml
+  - modules/data-pipelines/gridftp.yaml
+
+topology_template:
+
+  inputs:
+    mqtt_broker_uri:
+      type: string
+    mqtt_topic:
+      type: string
+    mqtt_username:
+      type: string
+    mqtt_password:
+      type: string
+    minio_access_key:
+      type: string
+    minio_secret_key:
+      type: string
+    minio_endpoint:
+      type: string
+    gridftp_host:
+      type: string
+    gridftp_port:
+      type: string
+    gridftp_username:
+      type: string
+    gridftp_dst_path:
+      type: string
+    gridftp_usercert:
+      type: string
+    gridftp_userkey:
+      type: string
+    NIFI_ENDPOINT:
+      type: string
+    NIFI_API_ENDPOINT:
+      type: string
+    NIFI_API_ACCESS_TOKEN:
+      type: string
+    NIFI_API_VALIDATE_CERTS:
+      type: boolean
+
+  node_templates:
+
+    mqtt-consumer:
+      type: sodalite.nodes.datapipeline.Consumer.MQTT
+      properties:
+        name: "KnowGo MQTT Consumer"
+        canvas_layout:
+          origin_X: 600.0
+          origin_Y: 300.0
+        BrokerURI: { get_input: mqtt_broker_uri }
+        Topic: "$share/knowgo-group/knowgo"
+        Username: { get_input: mqtt_username }
+        Password: { get_input: mqtt_password }
+        MaxQueueSize: 8096
+        SchedulingStrategy: "TIMER_DRIVEN"
+        SchedulingPeriodTimer: "1 sec"
+      requirements:
+        - connectToPipeline: s3-publisher
+
+    s3-publisher:
+      type: sodalite.nodes.datapipeline.Publisher.S3Bucket
+      properties:
+        name: "Vehicle IoT MinIO Publisher"
+        canvas_layout:
+          origin_X: 1500.0
+          origin_Y: 300.0
+        ObjectKey: "${hostname():append('/'):append(${filename}):append('.txt')}"
+        BucketName: knowgo-events
+        Region: eu-central-1
+        AccessKey: { get_input: minio_access_key }
+        SecretKey: { get_input: minio_secret_key }
+        EndpointOverrideURL: { get_input: minio_endpoint }
+
+    # mqtt-consumer:
+    #   type: sodalite.nodes.datapipeline.Consumer.MQTT
+    #   properties:
+    #     name: "KnowGo MQTT Consumer"
+    #     canvas_layout:
+    #       origin_X: 600.0
+    #       origin_Y: 300.0
+    #     BrokerURI: { get_input: mqtt_broker_uri }
+    #     Topic: "$share/knowgo-group/knowgo"
+    #     Username: { get_input: mqtt_username }
+    #     Password: { get_input: mqtt_password }
+    #     MaxQueueSize: 8096
+    #     SchedulingStrategy: "TIMER_DRIVEN"
+    #     SchedulingPeriodTimer: "1 sec"
+    #   requirements:
+    #     - connectToPipeline: gridftp-publisher
+
+    # gridftp-publisher:
+    #   type: sodalite.nodes.datapipeline.Publisher.GridFTP
+    #   properties:
+    #     name: "Vehicle IoT GridFTP Publisher"
+    #     canvas_layout:
+    #       origin_X: 1500.0
+    #       origin_Y: 300.0
+    #     Host: { get_input: gridftp_host }
+    #     Port: { get_input: gridftp_port }
+    #     Username: { get_input: gridftp_username }
+    #     Path: { get_input: gridftp_dst_path }
+    #     Usercert: { get_input: gridftp_usercert }
+    #     Userkey: { get_input: gridftp_userkey }
