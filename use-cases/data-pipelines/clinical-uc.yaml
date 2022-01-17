@@ -3,6 +3,7 @@ tosca_definitions_version: tosca_simple_yaml_1_3
 imports:
   - modules/data-pipelines/http.yaml
   - modules/data-pipelines/gridftp.yaml
+  - modules/data-pipelines/common.yaml
 
 topology_template:
 
@@ -57,3 +58,9 @@ topology_template:
         Path: { get_input: gridftp_dst_path }
         Usercert: { get_input: gridftp_usercert }
         Userkey: { get_input: gridftp_userkey }
+
+    dataset-transfer-completion:
+      type: sodalite.nodes.datapipeline.TransferCompletion
+      requirements:
+        - consumer: dataset-consumer
+        - publisher: gridftp-publisher
