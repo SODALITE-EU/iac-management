@@ -1,5 +1,5 @@
 # syntax = docker/dockerfile:1.0-experimental
-FROM ubuntu
+FROM ubuntu:22.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
