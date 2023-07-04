@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu:22.10
 # Install OpenJDK-8
 RUN apt-get update && \
 #     apt-get install -y openjdk-8-jdk && \
