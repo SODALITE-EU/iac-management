@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu:22.10
 
 ARG DEBIAN_FRONTEND=noninteractive
 
