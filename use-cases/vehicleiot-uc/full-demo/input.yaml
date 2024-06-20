@@ -1,7 +1,7 @@
 ssh-key-name: alexander_maslennikov
-image-name: "centos-7 x86_64"
+image-name: "centos-node_exporter"
 openstack-network-name: xlab
-security-groups: default,remote_access,vehicle-iot-full
+security-groups: default,remote_access,vehicle-iot-full,node-exporter
 flavor-name: m1.medium
 docker-network: knowgo_net
 dockerhub-user: 
