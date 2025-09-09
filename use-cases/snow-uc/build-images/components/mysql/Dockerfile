@@ -1,5 +1,5 @@
 # Derived from official mysql image (our base image)
-FROM mysql
+FROM mysql:9.4.0-oraclelinux9
 
 # Add a database
 ENV MYSQL_DATABASE wc_crawler_db
